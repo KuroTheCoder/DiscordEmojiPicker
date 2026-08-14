@@ -1,6 +1,6 @@
 {
 	"name": "discord-emoji-picker",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"description": "Discord-style emoji and sticker picker for Obsidian.",
 	"main": "main.js",
 	"type": "module",
