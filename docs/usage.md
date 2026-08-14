@@ -42,6 +42,9 @@ A shortcode is just `:filename:` — for example `:party-parrot:` inserts `emoji
 
 - **Typing** — start typing `:` in the editor and the suggest popup lists matching emojis and stickers; press `Enter` to complete.
 - **Rendering** — shortcodes render as images in reading mode, and in live preview / source mode while **Render shortcodes in editor** is enabled (default: on).
+
+![Typing a shortcode in the editor and having it render](screenshots/shortcode-demo.gif)
+
 - **Deleting** — hover the rendered image in the editor and click the **×** badge to remove it.
 - **Searching** — search matches file names, so renaming a file renames the shortcode.
 
@@ -57,7 +60,7 @@ A *set* is a subfolder inside your emoji or sticker folder; images in the folder
 
 Run **Import emojis & stickers** to open the import modal. Everything you add lands in a **queue**; press **Import** to download them all at once. Each item shows a ✓ or ✕ once it's processed.
 
-![The import modal with a queue of emojis and stickers](../docs/screenshots/import.svg)
+![The import modal with a queue of emojis and stickers](screenshots/import.svg)
 
 Use the **Import into** dropdown to pick the destination folder (emoji or sticker) and the **Set** dropdown to pick a subfolder — or type a new set name and press **Create**.
 
@@ -126,7 +129,7 @@ The variables live on `.gl-picker` — see `styles.css` for the full list.
 
 ## Settings reference
 
-![The settings tab](../docs/screenshots/settings.svg)
+![The settings tab](screenshots/settings.svg)
 
 | Setting | What it does |
 | --- | --- |

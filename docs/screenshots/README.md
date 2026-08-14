@@ -7,6 +7,7 @@ This folder holds the demo and screenshots used in the documentation.
 | File | Where it's used | Status |
 | --- | --- | --- |
 | `picker-demo.gif` | README — the only demo on the landing page | ✅ done |
+| `shortcode-demo.gif` | [docs/usage.md](../usage.md) — shortcode section | ✅ done |
 | `import.svg` | [docs/usage.md](../usage.md) — import modal section | placeholder, replace with `import.png` |
 | `settings.svg` | [docs/usage.md](../usage.md) — settings reference | placeholder, replace with `settings.png` |
 
