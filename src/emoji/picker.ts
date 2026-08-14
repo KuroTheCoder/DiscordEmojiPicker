@@ -1,0 +1,654 @@
+import { App, Editor, setIcon, TFile } from 'obsidian';
+import type DiscordEmojiPickerPlugin from '../main';
+import {
+	getMediaFiles,
+	MediaFile,
+	MediaKind,
+	shortcodeFor,
+	SUPPORTED_EXTENSIONS,
+} from '../media';
+import { fontSizePx, sizeInEm } from '../utils/helpers';
+
+const RECENT_KEY = 'recent';
+const MAX_RECENT = 40;
+const PANEL_WIDTH = 420;
+const PANEL_HEIGHT = 520;
+const MARGIN = 8;
+
+interface Rect {
+	left: number;
+	top: number;
+	bottom: number;
+}
+
+interface CmView {
+	coordsAtPos(pos: number): Rect | null;
+}
+
+type Mode = 'emoji' | 'sticker';
+
+interface Section {
+	key: string;
+	label: string;
+	type: 'emoji' | 'sticker' | 'recent';
+	items: MediaFile[];
+	icon: string;
+}
+
+export class EmojiPicker {
+	private app: App;
+	private plugin: DiscordEmojiPickerPlugin;
+	private editor: Editor;
+	private containerEl!: HTMLElement;
+	private searchInput!: HTMLInputElement;
+	private tabEmojiBtn!: HTMLButtonElement;
+	private tabStickerBtn!: HTMLButtonElement;
+	private navEl!: HTMLElement;
+	private scrollEl!: HTMLElement;
+	private tooltipEl!: HTMLElement;
+	private footerEl!: HTMLElement;
+	private countEl!: HTMLElement;
+	private emojiSections: Section[] = [];
+	private stickerSections: Section[] = [];
+	private sectionEls = new Map<string, HTMLElement>();
+	private gridEls = new Map<string, HTMLElement>();
+	private activeKey = RECENT_KEY;
+	private mode: Mode = 'emoji';
+	private query = '';
+	private initialQuery = '';
+	private initialMode?: Mode;
+	private cleanup: Array<() => void> = [];
+
+	constructor(
+		app: App,
+		plugin: DiscordEmojiPickerPlugin,
+		editor: Editor,
+		initialQuery?: string,
+		initialMode?: Mode,
+	) {
+		this.app = app;
+		this.plugin = plugin;
+		this.editor = editor;
+		this.initialQuery = initialQuery ?? '';
+		this.query = this.initialQuery;
+		this.initialMode = initialMode;
+	}
+
+	open() {
+		this.build();
+		if (this.initialMode && this.initialMode !== this.mode) {
+			this.setMode(this.initialMode);
+		}
+		this.query = this.initialQuery;
+		this.searchInput.value = this.initialQuery;
+		this.render();
+		this.attachListeners();
+		this.positionNearCursor();
+		this.searchInput.focus();
+	}
+
+	close() {
+		for (const fn of this.cleanup) fn();
+		this.cleanup = [];
+		this.containerEl.remove();
+	}
+
+	refresh() {
+		this.buildSections();
+		this.applySizes();
+		this.render();
+	}
+
+	private build() {
+		this.containerEl = createDiv({
+			cls: 'gl-picker',
+			attr: { 'data-theme': this.plugin.settings.pickerTheme },
+		});
+		document.body.appendChild(this.containerEl);
+		this.applySizes();
+
+		this.tooltipEl = this.containerEl.createDiv({ cls: 'gl-picker-tooltip' });
+
+		this.buildSections();
+		this.buildTabs(this.containerEl);
+		this.buildSearch(this.containerEl);
+		this.buildBody(this.containerEl);
+		this.render();
+	}
+
+	private applySizes() {
+		const s = this.plugin.settings;
+		const base = fontSizePx(this.containerEl);
+		this.containerEl.setCssProps({
+			'--gl-emoji-size': sizeInEm(clamp(s.emojiSize, 24, 160), base),
+			'--gl-sticker-size': sizeInEm(clamp(s.stickerSize, 48, 320), base),
+		});
+	}
+
+	private attachListeners() {
+		const onDocMouseDown = (ev: MouseEvent) => {
+			if (!this.containerEl.contains(ev.target as Node)) this.close();
+		};
+		document.addEventListener('mousedown', onDocMouseDown, true);
+		this.cleanup.push(() =>
+			document.removeEventListener('mousedown', onDocMouseDown, true),
+		);
+
+		const onDocKeyDown = (ev: KeyboardEvent) => {
+			if (ev.key === 'Escape') {
+				ev.stopPropagation();
+				this.close();
+			}
+		};
+		document.addEventListener('keydown', onDocKeyDown, true);
+		this.cleanup.push(() =>
+			document.removeEventListener('keydown', onDocKeyDown, true),
+		);
+
+		this.containerEl.addEventListener('keydown', this.onKeyDown);
+		this.cleanup.push(() =>
+			this.containerEl.removeEventListener('keydown', this.onKeyDown),
+		);
+	}
+
+	private positionNearCursor() {
+		const width = this.containerEl.offsetWidth || PANEL_WIDTH;
+		const height = this.containerEl.offsetHeight || PANEL_HEIGHT;
+		const vw = window.innerWidth;
+		const vh = window.innerHeight;
+
+		let left = MARGIN;
+		let top = MARGIN;
+
+		const coords = this.cursorCoords();
+		if (coords) {
+			left = coords.left;
+			top = coords.top - height - MARGIN;
+			if (top < MARGIN) top = coords.bottom + MARGIN;
+		}
+
+		left = Math.max(MARGIN, Math.min(left, vw - width - MARGIN));
+		top = Math.max(MARGIN, Math.min(top, vh - height - MARGIN));
+
+		this.containerEl.style.left = `${left}px`;
+		this.containerEl.style.top = `${top}px`;
+	}
+
+	private cursorCoords(): Rect | null {
+		try {
+			const offset = this.editor.posToOffset(this.editor.getCursor());
+			const cm = (this.editor as unknown as { cm?: CmView }).cm;
+			return cm ? cm.coordsAtPos(offset) : null;
+		} catch {
+			return null;
+		}
+	}
+
+	private buildSections() {
+		this.emojiSections = [];
+		this.stickerSections = [];
+
+		const emojiFiles = getMediaFiles(
+			this.app,
+			this.plugin.settings.emojiFolder,
+			'emoji',
+		);
+		const stickerFiles = getMediaFiles(
+			this.app,
+			this.plugin.settings.stickerFolder,
+			'sticker',
+		);
+
+		for (const [setName, items] of groupBy(emojiFiles, (f) => f.set)) {
+			this.emojiSections.push({
+				key: `emoji-${setName}`,
+				label: setName,
+				type: 'emoji',
+				items,
+				icon: randomThumb(this.app, items),
+			});
+		}
+
+		for (const [setName, items] of groupBy(stickerFiles, (f) => f.set)) {
+			this.stickerSections.push({
+				key: `sticker-${setName}`,
+				label: setName,
+				type: 'sticker',
+				items,
+				icon: randomThumb(this.app, items),
+			});
+		}
+	}
+
+	private buildTabs(container: HTMLElement) {
+		const tabs = container.createDiv({ cls: 'gl-picker-tabs' });
+		this.tabEmojiBtn = tabs.createEl('button', {
+			cls: 'gl-picker-tab active',
+			attr: { type: 'button' },
+			text: 'Emoji',
+		});
+		this.tabStickerBtn = tabs.createEl('button', {
+			cls: 'gl-picker-tab',
+			attr: { type: 'button' },
+			text: 'Sticker',
+		});
+		this.tabEmojiBtn.addEventListener('click', () => this.setMode('emoji'));
+		this.tabStickerBtn.addEventListener('click', () => this.setMode('sticker'));
+	}
+
+	private setMode(mode: Mode) {
+		if (this.mode === mode) return;
+		this.mode = mode;
+		this.activeKey = RECENT_KEY;
+		this.searchInput.value = '';
+		this.query = '';
+		this.tabEmojiBtn.toggleClass('active', mode === 'emoji');
+		this.tabStickerBtn.toggleClass('active', mode === 'sticker');
+		this.render();
+	}
+
+	private buildSearch(container: HTMLElement) {
+		const wrapper = container.createDiv({ cls: 'gl-picker-search' });
+		const icon = wrapper.createSpan({ cls: 'gl-picker-search-icon' });
+		setIcon(icon, 'search');
+		this.searchInput = wrapper.createEl('input', {
+			attr: { type: 'text', placeholder: 'Search...', spellcheck: 'false' },
+		});
+		this.searchInput.addEventListener('input', () => {
+			this.query = this.searchInput.value;
+			this.render();
+		});
+
+		const closeBtn = wrapper.createEl('button', {
+			cls: 'gl-picker-close',
+			attr: { type: 'button', 'aria-label': 'Close' },
+		});
+		setIcon(closeBtn, 'x');
+		closeBtn.addEventListener('click', () => this.close());
+
+		const importBtn = wrapper.createEl('button', {
+			cls: 'gl-picker-import',
+			attr: { type: 'button', 'aria-label': 'Import emojis & stickers' },
+		});
+		setIcon(importBtn, 'download');
+		importBtn.addEventListener('click', () => {
+			this.close();
+			this.plugin.openImport();
+		});
+	}
+
+	private buildBody(container: HTMLElement) {
+		const body = container.createDiv({ cls: 'gl-picker-body' });
+
+		this.navEl = body.createDiv({ cls: 'gl-picker-nav' });
+		this.navEl.addEventListener('click', (ev) => {
+			const target = (ev.target as HTMLElement).closest('button');
+			if (!target) return;
+			const key = target.getAttribute('data-key');
+			if (key) this.scrollToSection(key);
+		});
+
+		this.scrollEl = body.createDiv({ cls: 'gl-picker-scroll' });
+		this.scrollEl.addEventListener('scroll', () => this.onScroll(), { passive: true });
+
+		const footer = container.createDiv({ cls: 'gl-picker-footer' });
+		this.footerEl = footer.createSpan({ cls: 'gl-picker-footer-folder' });
+		this.countEl = footer.createSpan({ cls: 'gl-picker-footer-count' });
+		this.updateFooter();
+	}
+
+	private currentSections(): Section[] {
+		return this.mode === 'emoji' ? this.emojiSections : this.stickerSections;
+	}
+
+	private currentFolder(): string {
+		return this.mode === 'emoji'
+			? this.plugin.settings.emojiFolder
+			: this.plugin.settings.stickerFolder;
+	}
+
+	private recentItems(): MediaFile[] {
+		const folder = this.currentFolder();
+		return resolveRecent(this.app, this.plugin.settings.recentlyUsed, this.mode)
+			.filter((item) => isInFolder(item.path, folder));
+	}
+
+	private sectionsForRender(): Section[] {
+		const recent = this.recentItems();
+		const sections: Section[] = [];
+		if (recent.length > 0) {
+			sections.push({
+				key: RECENT_KEY,
+				label: 'Recently used',
+				type: 'recent',
+				items: recent,
+				icon: '',
+			});
+		}
+		sections.push(...this.currentSections());
+		return sections;
+	}
+
+	private render() {
+		this.renderNav();
+		this.renderSections();
+		this.updateNavHighlight();
+		this.updateFooter();
+	}
+
+	private updateFooter() {
+		const folder = this.currentFolder();
+		this.footerEl.setText(folder ? `Folder: ${folder}` : 'Folder: —');
+		this.countEl.setText(`${this.visibleButtons().length} items`);
+	}
+
+	private renderNav() {
+		this.navEl.empty();
+		const sections = this.sectionsForRender();
+
+		const recent = sections.find((s) => s.key === RECENT_KEY);
+		if (recent) {
+			const btn = this.navEl.createEl('button', {
+				cls: 'gl-picker-nav-item',
+				attr: { type: 'button', 'data-key': RECENT_KEY, 'aria-label': 'Recently used' },
+			});
+			setIcon(btn, 'history');
+		}
+
+		const q = this.query.trim().toLowerCase();
+		for (const section of sections) {
+			if (section.key === RECENT_KEY) continue;
+			if (q && !sectionHasMatch(section, q)) continue;
+			const btn = this.navEl.createEl('button', {
+				cls: 'gl-picker-nav-item',
+				attr: {
+					type: 'button',
+					'data-key': section.key,
+					'aria-label': section.label,
+				},
+			});
+			btn.createEl('img', {
+				attr: { src: section.icon, alt: section.label, loading: 'lazy' },
+			});
+		}
+	}
+
+	private renderSections() {
+		this.scrollEl.empty();
+		this.sectionEls.clear();
+		this.gridEls.clear();
+
+		const q = this.query.trim().toLowerCase();
+		let anyVisible = false;
+
+		for (const section of this.sectionsForRender()) {
+			const items = q
+				? section.items.filter(
+						(item) =>
+							item.label.toLowerCase().includes(q) ||
+							item.path.toLowerCase().includes(q),
+					)
+				: section.items;
+			if (section.type === 'recent' && q && items.length === 0) continue;
+			if (items.length === 0) continue;
+
+			anyVisible = true;
+			const sectionEl = this.scrollEl.createDiv({
+				cls: 'gl-picker-section',
+				attr: { 'data-key': section.key },
+			});
+			this.sectionEls.set(section.key, sectionEl);
+			sectionEl.createEl('h3', {
+				cls: 'gl-picker-section-title',
+				text: section.label,
+			});
+			const grid = sectionEl.createDiv({
+				cls:
+					section.type === 'sticker'
+						? 'gl-picker-grid gl-picker-grid-stickers'
+						: 'gl-picker-grid',
+			});
+			this.gridEls.set(section.key, grid);
+			for (const item of items) {
+				grid.appendChild(this.makeItemButton(item, section.type));
+			}
+		}
+
+		if (!anyVisible) {
+			this.scrollEl.createDiv({
+				cls: 'gl-picker-empty',
+				text: q
+					? 'No matches found.'
+					: 'No images yet. Put images in the folder set in Settings.',
+			});
+		}
+	}
+
+	private makeItemButton(item: MediaFile, type: Section['type']): HTMLButtonElement {
+		const btn = createEl('button', {
+			cls: type === 'sticker' ? 'gl-sticker' : 'gl-emoji',
+			attr: { type: 'button' },
+		});
+		btn.createEl('img', {
+			attr: {
+				src: resourcePath(this.app, item.file),
+				alt: item.label,
+				loading: 'lazy',
+			},
+		});
+		btn.addEventListener('mousemove', (ev) =>
+			this.showTooltip(ev.clientX, ev.clientY, item),
+		);
+		btn.addEventListener('mouseleave', () => this.hideTooltip());
+		btn.addEventListener('click', () => this.insertItem(item));
+		return btn;
+	}
+
+	private insertItem(item: MediaFile) {
+		const style = this.plugin.settings.insertStyle;
+		let text: string;
+		if (style === 'shortcode') {
+			text = `:${shortcodeFor(item)}: `;
+		} else if (style === 'embed') {
+			text = `![[${item.path}|${this.sizeForMode()}]] `;
+		} else {
+			const size = this.sizeForMode();
+			const src = resourcePath(this.app, item.file);
+			text = `<img src="${src}" alt="${escapeAttr(item.label)}" style="width:${size}px;height:${size}px;object-fit:contain;vertical-align:middle;display:inline-block" /> `;
+		}
+		this.editor.replaceSelection(text);
+		void this.recordRecent(item);
+	}
+
+	private sizeForMode(): number {
+		return this.mode === 'emoji'
+			? this.plugin.settings.emojiSize
+			: this.plugin.settings.stickerSize;
+	}
+
+	private async recordRecent(item: MediaFile) {
+		const recent = this.plugin.settings.recentlyUsed.filter(
+			(path) => path !== item.path,
+		);
+		recent.unshift(item.path);
+		this.plugin.settings.recentlyUsed = recent.slice(0, MAX_RECENT);
+		await this.plugin.saveSettings();
+		this.refreshRecent();
+	}
+
+	private refreshRecent() {
+		const grid = this.gridEls.get(RECENT_KEY);
+		if (grid) {
+			grid.empty();
+			for (const item of this.recentItems()) {
+				grid.appendChild(this.makeItemButton(item, 'recent'));
+			}
+		} else {
+			this.render();
+		}
+	}
+
+	private scrollToSection(key: string) {
+		const el = this.sectionEls.get(key);
+		if (!el) return;
+		this.activeKey = key;
+		this.updateNavHighlight();
+		el.scrollIntoView();
+	}
+
+	private onScroll() {
+		let current = RECENT_KEY;
+		for (const [key, el] of this.sectionEls) {
+			if (el.offsetTop - this.scrollEl.scrollTop <= 60) {
+				current = key;
+			}
+		}
+		if (current !== this.activeKey) {
+			this.activeKey = current;
+			this.updateNavHighlight();
+		}
+	}
+
+	private updateNavHighlight() {
+		for (const el of Array.from(
+			this.navEl.querySelectorAll('.gl-picker-nav-item'),
+		)) {
+			el.toggleClass(
+				'active',
+				el.getAttribute('data-key') === this.activeKey,
+			);
+		}
+	}
+
+	private showTooltip(clientX: number, clientY: number, item: MediaFile) {
+		this.tooltipEl.empty();
+		this.tooltipEl.createEl('img', {
+			attr: { src: resourcePath(this.app, item.file), alt: item.label },
+		});
+		this.tooltipEl.createDiv({
+			cls: 'gl-picker-tooltip-label',
+			text: item.label,
+		});
+		this.tooltipEl.toggleClass('is-visible', true);
+		this.tooltipEl.style.left = `${clientX}px`;
+		this.tooltipEl.style.top = `${clientY}px`;
+	}
+
+	private hideTooltip() {
+		this.tooltipEl.toggleClass('is-visible', false);
+	}
+
+	private onKeyDown = (ev: KeyboardEvent) => {
+		const isArrow = ev.key.startsWith('Arrow');
+		const isEnter = ev.key === 'Enter';
+		if (!isArrow && !isEnter) return;
+
+		const buttons = this.visibleButtons();
+		const active = activeDocument.activeElement as HTMLElement | null;
+
+		if (active === this.searchInput) {
+			if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') {
+				ev.preventDefault();
+				buttons[0]?.focus();
+			}
+			return;
+		}
+
+		const idx = buttons.indexOf(active as HTMLButtonElement);
+		if (idx === -1) {
+			if (isArrow) {
+				ev.preventDefault();
+				buttons[0]?.focus();
+			}
+			return;
+		}
+
+		if (isEnter) {
+			ev.preventDefault();
+			buttons[idx]?.click();
+			return;
+		}
+
+		ev.preventDefault();
+		let next = idx;
+		if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') {
+			next = (idx + 1) % buttons.length;
+		} else {
+			next = (idx - 1 + buttons.length) % buttons.length;
+		}
+		buttons[next]?.focus();
+	};
+
+	private visibleButtons(): HTMLButtonElement[] {
+		return Array.from(
+			this.scrollEl.querySelectorAll('.gl-emoji, .gl-sticker'),
+			(el) => el as HTMLButtonElement,
+		);
+	}
+}
+
+function resolveRecent(
+	app: App,
+	paths: string[],
+	kind: MediaKind,
+): MediaFile[] {
+	const byPath = new Map(app.vault.getFiles().map((f) => [f.path, f] as const));
+	const items: MediaFile[] = [];
+	for (const path of paths) {
+		const file = byPath.get(path);
+		if (file && SUPPORTED_EXTENSIONS.has(file.extension)) {
+			items.push({
+				file,
+				path: file.path,
+				label: file.basename,
+				set: 'Recently used',
+				kind,
+			});
+		}
+	}
+	return items;
+}
+
+function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {
+	const map = new Map<string, T[]>();
+	for (const item of items) {
+		const key = keyOf(item);
+		const group = map.get(key);
+		if (group) group.push(item);
+		else map.set(key, [item]);
+	}
+	return map;
+}
+
+function resourcePath(app: App, file?: TFile): string {
+	return file ? app.vault.getResourcePath(file) : '';
+}
+
+function randomThumb(app: App, items: MediaFile[]): string {
+	const file = items[Math.floor(Math.random() * items.length)]?.file;
+	return resourcePath(app, file);
+}
+
+function sectionHasMatch(section: Section, query: string): boolean {
+	return section.items.some(
+		(item) =>
+			item.label.toLowerCase().includes(query) ||
+			item.path.toLowerCase().includes(query),
+	);
+}
+
+function isInFolder(path: string, folder: string): boolean {
+	const root = folder.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+	if (!root) return false;
+	const idx = path.lastIndexOf('/');
+	const dir = idx === -1 ? '' : path.slice(0, idx);
+	return dir === root || dir.startsWith(`${root}/`);
+}
+
+function clamp(value: number, min: number, max: number): number {
+	return Math.max(min, Math.min(max, value));
+}
+
+function escapeAttr(value: string): string {
+	return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}

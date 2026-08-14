@@ -1,0 +1,10 @@
+{
+	"id": "discord-emoji-picker",
+	"name": "Discord Emoji Picker",
+	"version": "1.0.0",
+	"minAppVersion": "1.6.6",
+	"description": "Discord-style emoji and sticker picker that reads images from folders in your vault, fully offline.",
+	"author": "KuroTheDev",
+	"authorUrl": "https://github.com/KuroTheCoder",
+	"isDesktopOnly": false
+}
