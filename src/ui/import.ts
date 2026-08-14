@@ -228,6 +228,7 @@ export class ImportModal extends Modal {
 		}
 
 		this.bodyEl = contentEl.createDiv({ cls: 'gl-import-body' });
+		this.statusEl = contentEl.createDiv({ cls: 'gl-import-status' });
 		this.renderBody();
 
 		const queueBox = contentEl.createDiv({ cls: 'gl-import-queue' });
@@ -237,8 +238,6 @@ export class ImportModal extends Modal {
 		});
 		this.queueEl = queueBox.createDiv({ cls: 'gl-import-queue-list' });
 		this.renderQueue();
-
-		this.statusEl = contentEl.createDiv({ cls: 'gl-import-status' });
 
 		const footer = contentEl.createDiv({ cls: 'gl-import-footer' });
 		footer
@@ -808,6 +807,7 @@ export class ImportModal extends Modal {
 	}
 
 	private setStatus(text: string) {
+		if (!this.statusEl) return;
 		this.statusEl.setText(text);
 	}
 }
