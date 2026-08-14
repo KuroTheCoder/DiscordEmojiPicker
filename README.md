@@ -63,6 +63,8 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 ## Security & privacy
 
 - The plugin is **offline by default**: no telemetry, and no network requests except to the public Discord CDN when you import or clone from Discord.
+- **Vault access is limited** to the two folders you configure (emoji and sticker folders). The plugin never scans the rest of your vault.
+- The **clipboard is only read** when you click **Read clipboard image** in the import modal.
 - The **Discord token is stored locally** in this vault's plugin data and is only ever sent to Discord.
 - **Using your personal user token violates Discord's Terms of Service** and may get your account flagged or banned — the same risk as tools like Vencord. A **bot token is safe**; add the bot to the servers you want to clone from.
 

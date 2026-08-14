@@ -1,4 +1,12 @@
-import { App, FileSystemAdapter, Modal, Notice, Platform, TFolder } from 'obsidian';
+import {
+	App,
+	FileSystemAdapter,
+	Modal,
+	Notice,
+	Platform,
+	TFile,
+	TFolder,
+} from 'obsidian';
 
 export function normalizeFolder(folder: string): string {
 	return folder
@@ -35,6 +43,20 @@ export async function ensureFolder(app: App, dir: string): Promise<boolean> {
 	}
 }
 
+export function listFilesInFolder(app: App, dir: string): TFile[] {
+	const root = normalizeFolder(dir);
+	if (!root) return [];
+	const folder = app.vault.getAbstractFileByPath(root);
+	if (!(folder instanceof TFolder)) return [];
+	const files: TFile[] = [];
+	for (const child of folder.children) {
+		if (child instanceof TFile) files.push(child);
+		else if (child instanceof TFolder)
+			files.push(...listFilesInFolder(app, child.path));
+	}
+	return files;
+}
+
 export async function deleteSet(
 	app: App,
 	folder: string,
@@ -44,7 +66,7 @@ export async function deleteSet(
 	const set = normalizeFolder(setName);
 	if (!root || !set) return false;
 	const dir = `${root}/${set}`;
-	for (const file of app.vault.getFiles().filter((f) => f.path.startsWith(`${dir}/`))) {
+	for (const file of listFilesInFolder(app, dir)) {
 		try {
 			await app.fileManager.trashFile(file);
 		} catch {

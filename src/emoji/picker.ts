@@ -616,11 +616,10 @@ function resolveRecent(
 	paths: string[],
 	kind: MediaKind,
 ): MediaFile[] {
-	const byPath = new Map(app.vault.getFiles().map((f) => [f.path, f] as const));
 	const items: MediaFile[] = [];
 	for (const path of paths) {
-		const file = byPath.get(path);
-		if (file && SUPPORTED_EXTENSIONS.has(file.extension)) {
+		const file = app.vault.getAbstractFileByPath(path);
+		if (file instanceof TFile && SUPPORTED_EXTENSIONS.has(file.extension)) {
 			items.push({
 				file,
 				path: file.path,

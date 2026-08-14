@@ -236,7 +236,7 @@ function replaceShortcodes(
 	base: number,
 ): DocumentFragment | null {
 	const doc = node.ownerDocument;
-	const fragment = doc.createDocumentFragment();
+	const fragment = createFragment();
 	let last = 0;
 	let found = false;
 
@@ -269,11 +269,14 @@ function makeImage(
 		media.kind === 'emoji'
 			? plugin.settings.emojiSize
 			: plugin.settings.stickerSize;
-	const img = doc.createElement('img');
-	img.src = plugin.app.vault.getResourcePath(media.file);
-	img.alt = `:${shortcodeFor(media)}:`;
-	img.title = media.label;
-	img.className = 'gl-shortcode-img';
+	const img = createEl('img', {
+		attr: {
+			src: plugin.app.vault.getResourcePath(media.file),
+			alt: `:${shortcodeFor(media)}:`,
+			title: media.label,
+		},
+		cls: 'gl-shortcode-img',
+	});
 	const em = sizeInEm(size, base);
 	img.style.width = em;
 	img.style.height = em;

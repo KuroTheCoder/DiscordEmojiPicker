@@ -1,4 +1,5 @@
 import { App, TFile } from 'obsidian';
+import { listFilesInFolder, normalizeFolder } from './utils/folders';
 
 export const SUPPORTED_EXTENSIONS = new Set([
 	'png',
@@ -34,13 +35,8 @@ export function getMediaFiles(
 	const root = normalizeFolder(folder);
 	if (!root) return [];
 
-	return app.vault
-		.getFiles()
-		.filter((file) => {
-			if (!SUPPORTED_EXTENSIONS.has(file.extension)) return false;
-			const dir = parentDir(file.path);
-			return dir === root || dir.startsWith(`${root}/`);
-		})
+	return listFilesInFolder(app, root)
+		.filter((file) => SUPPORTED_EXTENSIONS.has(file.extension))
 		.map((file) => ({
 			file,
 			path: file.path,
@@ -83,13 +79,6 @@ export function buildShortcodeMap(
 		if (code && !map.has(code)) map.set(code, item);
 	}
 	return map;
-}
-
-function normalizeFolder(folder: string): string {
-	return folder
-		.trim()
-		.replace(/\\/g, '/')
-		.replace(/^\/+|\/+$/g, '');
 }
 
 function parentDir(path: string): string {
