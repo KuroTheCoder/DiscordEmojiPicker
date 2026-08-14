@@ -2,6 +2,21 @@
 
 All notable changes to Discord Emoji Picker.
 
+## 1.0.1 - 2026-08-14
+
+### Changed
+
+- Emoji and sticker folders now default to `.gl-emoji` and `.gl-stickers` — dot-folders that Obsidian hides from the file explorer, so they no longer clutter vault navigation. Existing installs keep their current folders.
+- Settings tab now uses the declarative settings API (`getSettingDefinitions`): settings appear in Obsidian 1.13+ settings search, with the imperative layout kept for older versions.
+- Vault scans narrowed: the plugin walks only the configured folders instead of enumerating the whole vault.
+- Vault access and clipboard use are disclosed in the README's security section (clipboard is only read on the explicit "Read clipboard image" action).
+
+### Fixed
+
+- Hover tooltip glitches on the picker (repositioning throttled with `requestAnimationFrame`).
+- Shortcode preview images no longer trigger the drag-resize overlay of the image-converter plugin (`draggable="false"`).
+- Shortcode rendering now uses Obsidian's `createEl`/`createFragment` DOM helpers instead of `document.createElement`.
+
 ## 1.0.0 - 2026-08-14
 
 Initial release.

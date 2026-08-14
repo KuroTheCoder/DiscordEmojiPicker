@@ -1,6 +1,6 @@
 {
 	"name": "discord-emoji-picker",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Discord-style emoji and sticker picker for Obsidian.",
 	"main": "main.js",
 	"type": "module",
@@ -10,7 +10,12 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint ."
 	},
-	"keywords": ["obsidian", "emoji", "sticker", "discord"],
+	"keywords": [
+		"obsidian",
+		"emoji",
+		"sticker",
+		"discord"
+	],
 	"license": "ISC",
 	"devDependencies": {
 		"@codemirror/state": "6.5.0",

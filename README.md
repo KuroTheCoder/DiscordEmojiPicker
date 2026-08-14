@@ -36,7 +36,7 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 
 ## Quick start
 
-1. Put some images in your vault — e.g. `emoji/` and `stickers/` (create them via **Settings → Discord Emoji Picker**; each subfolder becomes a *set*).
+1. Put some images in your vault — e.g. `.gl-emoji/` and `.gl-stickers/` (create them via **Settings → Discord Emoji Picker**; each subfolder becomes a *set*). They're dot-folders, so Obsidian hides them from the file explorer.
 2. Open a note, click the smile ribbon icon (or run **Open emoji & sticker picker**) and click an image to insert it.
 3. Type `:name:` anywhere to insert by shortcode — autocomplete will kick in.
 4. Run **Import emojis & stickers** to pull images from the web, Discord, or local files.
@@ -45,7 +45,7 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 
 | Setting | What it does |
 | --- | --- |
-| Emoji folder | Vault folder with emoji images; each subfolder becomes a set |
+| Emoji folder | Vault folder with emoji images (default `.gl-emoji`); each subfolder becomes a set |
 | Sticker folder | Vault folder with sticker images; each subfolder becomes a set |
 | Emoji sets / Sticker sets | Create, delete, or open set folders |
 | Insert style | Shortcode, embed, or HTML when clicking in the picker |
@@ -63,7 +63,7 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 ## Security & privacy
 
 - The plugin is **offline by default**: no telemetry, and no network requests except to the public Discord CDN when you import or clone from Discord.
-- **Vault access is limited** to the two folders you configure (emoji and sticker folders). The plugin never scans the rest of your vault.
+- **Vault access is limited** to the two folders you configure (emoji and sticker folders, hidden by default). The plugin never scans the rest of your vault.
 - The **clipboard is only read** when you click **Read clipboard image** in the import modal.
 - The **Discord token is stored locally** in this vault's plugin data and is only ever sent to Discord.
 - **Using your personal user token violates Discord's Terms of Service** and may get your account flagged or banned — the same risk as tools like Vencord. A **bot token is safe**; add the bot to the servers you want to clone from.
