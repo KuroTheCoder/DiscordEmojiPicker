@@ -8,6 +8,7 @@ import { EmojiPicker } from './emoji/picker';
 import { MediaSuggest } from './emoji/suggest';
 import { ImportModal } from './ui/import';
 import { registerShortcodeRenderer } from './shortcode';
+import { seedSamples } from './samples';
 
 export default class DiscordEmojiPickerPlugin extends Plugin {
 	settings!: DiscordEmojiPickerSettings;
@@ -16,6 +17,7 @@ export default class DiscordEmojiPickerPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+		await seedSamples(this);
 		await this.ensureFolder(this.settings.emojiFolder);
 		await this.ensureFolder(this.settings.stickerFolder);
 

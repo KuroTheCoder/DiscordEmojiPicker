@@ -27,6 +27,14 @@ import {
 	openFolder,
 	setFolderPath,
 } from '../utils/folders';
+import {
+	PACK_PROVIDERS,
+	PackProvider,
+	packProviderById,
+	packUrlForCode,
+	POPULAR_SET,
+	normalizeCode,
+} from '../packs';
 
 type ImportMode = 'url' | 'discord' | 'clipboard' | 'note' | 'pack';
 
@@ -45,11 +53,6 @@ const MODE_ICONS: Record<ImportMode, string> = {
 	note: 'file-text',
 	pack: 'smile',
 };
-
-const EMOJILIB_URL =
-	'https://cdn.jsdelivr.net/npm/emojilib@3.0.12/dist/emoji-en-US.json';
-const TWEMOJI_BASE =
-	'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg';
 
 interface QueuedItem {
 	id: number;
@@ -73,8 +76,6 @@ interface ClipboardImage {
 	mime: string;
 	data: ArrayBuffer;
 }
-
-let emojiAliasMap: Map<string, string> | null = null;
 
 export class ImportModal extends Modal {
 	private plugin: DiscordEmojiPickerPlugin;
@@ -401,13 +402,29 @@ export class ImportModal extends Modal {
 			}
 			case 'pack': {
 				const box = this.bodyEl.createDiv({ cls: 'gl-import-section' });
+				let provider = packProviderById('twemoji');
 				box.createDiv({
 					cls: 'gl-import-section-label',
-					text: 'Twemoji pack',
+					text: 'Emoji packs',
 				});
 				box.createDiv({
 					cls: 'gl-import-hint',
-					text: 'Downloads the Twemoji (Twitter) SVG set and saves each emoji into the folder above.',
+					text: 'Download whole emoji sets from open-license packs and save them into the folder above.',
+				});
+				new Setting(box)
+					.setName('Pack')
+					.addDropdown((dropdown) => {
+						for (const p of PACK_PROVIDERS) {
+							dropdown.addOption(p.id, p.label);
+						}
+						dropdown.onChange((value) => {
+							provider = packProviderById(value);
+							hint.setText(provider.hint);
+						});
+					});
+				const hint = box.createDiv({
+					cls: 'gl-import-hint',
+					text: provider.hint,
 				});
 				const textarea = box.createEl('textarea', {
 					cls: 'gl-import-textarea',
@@ -420,10 +437,17 @@ export class ImportModal extends Modal {
 				});
 				box.createEl('button', {
 					cls: 'gl-import-action',
+					text: 'Add popular set',
+					attr: { type: 'button' },
+				}).addEventListener('click', () => {
+					void this.addPackCodes(POPULAR_SET.join('\n'), provider);
+				});
+				box.createEl('button', {
+					cls: 'gl-import-action',
 					text: 'Add to queue',
 					attr: { type: 'button' },
 				}).addEventListener('click', () => {
-					void this.addPackCodes(textarea.value);
+					void this.addPackCodes(textarea.value, provider);
 				});
 				break;
 			}
@@ -498,7 +522,7 @@ export class ImportModal extends Modal {
 		this.setStatus(`Queued ${sources.length} image(s) from the note.`);
 	}
 
-	private async addPackCodes(text: string) {
+	private async addPackCodes(text: string, provider: PackProvider) {
 		const codes = text
 			.split(/\r?\n/)
 			.map((line) => line.trim())
@@ -508,7 +532,7 @@ export class ImportModal extends Modal {
 		let added = 0;
 		let failed = 0;
 		for (const code of codes) {
-			const url = await packUrlForCode(code);
+			const url = await packUrlForCode(code, provider);
 			if (url) {
 				const clean = normalizeCode(code).replace(/[^a-z0-9_-]/g, '');
 				this.queueItem({ name: clean || code, kind: 'emoji', url });
@@ -901,45 +925,6 @@ async function collectNoteImages(app: App): Promise<NoteImage[]> {
 		}
 	}
 	return sources;
-}
-
-async function packUrlForCode(code: string): Promise<string | undefined> {
-	const char = await emojiCharFor(code);
-	if (!char) return undefined;
-	return twemojiUrlFor(char);
-}
-
-async function emojiCharFor(code: string): Promise<string | undefined> {
-	if (!emojiAliasMap) {
-		const res = await requestUrl({ url: EMOJILIB_URL });
-		const json = res.json as Record<string, string[]>;
-		emojiAliasMap = new Map();
-		for (const [char, aliases] of Object.entries(json)) {
-			for (const alias of aliases) {
-				const key = normalizeCode(alias);
-				if (key && !emojiAliasMap.has(key)) emojiAliasMap.set(key, char);
-			}
-		}
-	}
-	const clean = normalizeCode(code);
-	if (clean && emojiAliasMap.has(clean)) return emojiAliasMap.get(clean);
-	const stripped = code.replace(/^:+|:+$/g, '');
-	const chars = Array.from(stripped);
-	if (chars.length > 0 && chars.every((c) => (c.codePointAt(0) ?? 0) > 0x7f)) {
-		return stripped;
-	}
-	return undefined;
-}
-
-function normalizeCode(code: string): string {
-	return code.replace(/^:+|:+$/g, '').toLowerCase().replace(/\s+/g, '_');
-}
-
-function twemojiUrlFor(char: string): string {
-	const codepoints = Array.from(char)
-		.map((c) => c.codePointAt(0)!.toString(16))
-		.join('-');
-	return `${TWEMOJI_BASE}/${codepoints}.svg`;
 }
 
 function targetDir(target: { folder: string; setName: string }): string {

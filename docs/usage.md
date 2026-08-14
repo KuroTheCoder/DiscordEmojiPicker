@@ -55,6 +55,7 @@ A *set* is a subfolder inside your emoji or sticker folder; images in the folder
 - Images in `.gl-emoji/animals/` belong to the **animals** set; images in `.gl-emoji/` belong to the general set.
 
 The default folders are `.gl-emoji` and `.gl-stickers` — dot-folders, which Obsidian hides from the file explorer so they don't clutter your navigation. You can change them to any folder in the settings.
+- **On first run**, the plugin seeds a small sample set — the **Cats** emoji set and the **Pets** sticker set — so you can try everything immediately. Delete them whenever you like.
 - **Create / delete / open** sets from **Settings → Emoji sets / Sticker sets**, or from the set dropdown in the import modal.
 - Deleting a set moves every image in it to your trash and removes the folder — you can't undo it, so confirm carefully.
 
@@ -92,7 +93,15 @@ Insert any image already embedded in the current note (`![[...]]` links or `<img
 
 ### Emoji pack tab
 
-Pick from public emoji packs (e.g. Twemoji) to bulk-import common emojis without hunting for images.
+Download whole emoji sets from open-license packs and save them into the destination folder:
+
+1. Pick a **pack** (Twemoji, Noto Emoji, or OpenMoji).
+2. Press **Add popular set** to queue ~250 of the most common emojis, or type names yourself (one per line, e.g. `smile`, `joy`, `:heart:`).
+3. Press **Import** to download them all at once.
+
+Each pack is fetched from the jsDelivr CDN and licensed for free reuse (Twemoji CC-BY 4.0, Noto Emoji Apache 2.0 / OFL, OpenMoji CC BY-SA 4.0).
+
+Want more variety? Sites like [emoji.gg](https://emoji.gg/) host thousands of emoji packs you can download and drag into your emoji or sticker folders.
 
 ## Cloning from Discord servers
 

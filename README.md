@@ -36,10 +36,10 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 
 ## Quick start
 
-1. Put some images in your vault — e.g. `.gl-emoji/` and `.gl-stickers/` (create them via **Settings → Discord Emoji Picker**; each subfolder becomes a *set*). They're dot-folders, so Obsidian hides them from the file explorer.
+1. On first run, the plugin seeds sample sets (Cats emojis, Pets stickers) into `.gl-emoji/` and `.gl-stickers/` so you can try it out immediately. Delete them whenever you like.
 2. Open a note, click the smile ribbon icon (or run **Open emoji & sticker picker**) and click an image to insert it.
 3. Type `:name:` anywhere to insert by shortcode — autocomplete will kick in.
-4. Run **Import emojis & stickers** to pull images from the web, Discord, or local files.
+4. Run **Import emojis & stickers** to pull images from the web, Discord, popular emoji packs (Twemoji, Noto Emoji, OpenMoji), or local files.
 
 ## Settings
 
@@ -62,7 +62,7 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 
 ## Security & privacy
 
-- The plugin is **offline by default**: no telemetry, and no network requests except to the public Discord CDN when you import or clone from Discord.
+- The plugin is **offline by default**: no telemetry, and no network requests except to the public Discord CDN when you import or clone from Discord, and to the jsDelivr CDN when you use the **Emoji packs** import tab (Twemoji, Noto Emoji, and OpenMoji are open-license sets).
 - **Vault access is limited** to the two folders you configure (emoji and sticker folders, hidden by default). The plugin never scans the rest of your vault.
 - The **clipboard is only read** when you click **Read clipboard image** in the import modal.
 - The **Discord token is stored locally** in this vault's plugin data and is only ever sent to Discord.

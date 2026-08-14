@@ -2,6 +2,14 @@
 
 All notable changes to Discord Emoji Picker.
 
+## 1.1.0 - 2026-08-14
+
+### Added
+
+- **Sample sets on first run**: the plugin seeds a small Cats emoji set and Pets sticker set into `.gl-emoji/` and `.gl-stickers/` so fresh installs work out of the box. Delete them anytime.
+- **Emoji packs tab reworked**: three open-license packs to choose from — Twemoji, Noto Emoji, and OpenMoji — plus an **Add popular set** button that queues ~250 common emojis with one click.
+- A curated sample pack (the full source images) ships in the repository under `docs/Sample sets/`.
+
 ## 1.0.1 - 2026-08-14
 
 ### Changed

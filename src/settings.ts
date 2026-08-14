@@ -27,6 +27,7 @@ export type PickerTheme = 'default' | 'compact' | 'vibrant' | 'minimal';
 export interface DiscordEmojiPickerSettings {
 	emojiFolder: string;
 	stickerFolder: string;
+	samplesSeeded: boolean;
 	recentlyUsed: string[];
 	emojiSize: number;
 	stickerSize: number;
@@ -40,6 +41,7 @@ export interface DiscordEmojiPickerSettings {
 export const DEFAULT_SETTINGS: DiscordEmojiPickerSettings = {
 	emojiFolder: '.gl-emoji',
 	stickerFolder: '.gl-stickers',
+	samplesSeeded: false,
 	recentlyUsed: [],
 	emojiSize: 42,
 	stickerSize: 96,
