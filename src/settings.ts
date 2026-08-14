@@ -39,8 +39,8 @@ export interface DiscordEmojiPickerSettings {
 }
 
 export const DEFAULT_SETTINGS: DiscordEmojiPickerSettings = {
-	emojiFolder: '.gl-emoji',
-	stickerFolder: '.gl-stickers',
+	emojiFolder: 'discordemojipicker/emojis',
+	stickerFolder: 'discordemojipicker/stickers',
 	samplesSeeded: false,
 	recentlyUsed: [],
 	emojiSize: 42,

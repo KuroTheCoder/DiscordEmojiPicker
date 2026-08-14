@@ -251,16 +251,32 @@ export async function renderSystemEmojiPng(char: string): Promise<ArrayBuffer> {
 	const canvas = createEl('canvas');
 	canvas.width = size;
 	canvas.height = size;
-	const ctx = canvas.getContext('2d');
-	if (!ctx) throw new Error('Canvas is not available.');
-	ctx.clearRect(0, 0, size, size);
-	ctx.font = `${Math.floor(size * 0.78)}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
-	ctx.textAlign = 'center';
-	ctx.textBaseline = 'middle';
-	ctx.fillText(char, size / 2, size / 2 + size * 0.04);
-	const blob = await new Promise<Blob | null>((resolve) =>
-		canvas.toBlob(resolve, 'image/png'),
-	);
-	if (!blob) throw new Error('Could not render the emoji image.');
-	return blob.arrayBuffer();
+	try {
+		const ctx = canvas.getContext('2d');
+		if (!ctx) throw new Error('Canvas is not available.');
+		ctx.clearRect(0, 0, size, size);
+		ctx.font = `${Math.floor(size * 0.78)}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.fillText(char, size / 2, size / 2 + size * 0.04);
+		const blob =
+			(await new Promise<Blob | null>((resolve) =>
+				canvas.toBlob(resolve, 'image/png'),
+			)) ?? dataUrlToBlob(canvas.toDataURL('image/png'));
+		if (!blob) throw new Error('Could not render the emoji image.');
+		return blob.arrayBuffer();
+	} finally {
+		canvas.remove();
+	}
+}
+
+function dataUrlToBlob(dataUrl: string): Blob | null {
+	const comma = dataUrl.indexOf(',');
+	if (comma === -1) return null;
+	const binary = atob(dataUrl.slice(comma + 1));
+	const bytes = new Uint8Array(binary.length);
+	for (let i = 0; i < binary.length; i++) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	return new Blob([bytes], { type: 'image/png' });
 }

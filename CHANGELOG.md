@@ -6,7 +6,12 @@ All notable changes to Discord Emoji Picker.
 
 ### Added
 
-- **System emoji set (offline)**: the Emoji pack tab can render ~250 emojis locally from your device's emoji font (Segoe UI Emoji on Windows) with no download.
+- **System emoji set (offline)**: the Emoji pack tab can render ~240 emojis locally from your device's emoji font (Segoe UI Emoji on Windows) with no download.
+- **Per-provider set folders**: importing a pack (Twemoji, Noto Emoji, OpenMoji) or the system emoji set automatically creates a matching set folder (e.g. `discordemojipicker/emojis/twemoji/`), so sets stay organized without manual setup.
+
+### Changed
+
+- Default folders are now `discordemojipicker/emojis` and `discordemojipicker/stickers` — a visible, single home for all media instead of hidden dot-folders. Existing installs keep their current folders.
 
 ### Fixed
 
@@ -14,6 +19,7 @@ All notable changes to Discord Emoji Picker.
 - Emoji pack name resolution: Discord-style names like `sweat_smile` or `heart_eyes` now resolve (fallback alias map), so the popular set imports fully instead of failing.
 - Pack downloads strip variation selectors (`fe0f`) from codepoints, fixing 404s for emojis like ☀️, ❄️, and ✌️ on some packs.
 - Downloads are throttled slightly to avoid CDN rate-limit failures on large sets.
+- System emoji rendering is more robust (fallback export path) and cleans up its canvas elements.
 
 ## 1.1.0 - 2026-08-14
 

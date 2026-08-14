@@ -534,9 +534,12 @@ export class ImportModal extends Modal {
 	}
 
 	private async addSystemEmojis() {
+		this.setName = 'system';
+		this.refreshSetDropdown();
+		this.setNameInput?.setValue(this.setName);
 		this.setStatus('Rendering system emoji set...');
 		let added = 0;
-		let failed = 0;
+		const failed: string[] = [];
 		for (const emoji of SYSTEM_EMOJI) {
 			try {
 				const data = await renderSystemEmojiPng(emoji.char);
@@ -548,16 +551,21 @@ export class ImportModal extends Modal {
 				});
 				added++;
 			} catch {
-				failed++;
+				failed.push(emoji.name);
 			}
 		}
 		this.setStatus(
 			`Queued ${added} system emoji(s)` +
-				(failed ? `, ${failed} could not be rendered.` : '.'),
+				(failed.length
+					? `, ${failed.length} failed: ${failed.slice(0, 8).join(', ')}${failed.length > 8 ? '...' : ''}.`
+					: '.'),
 		);
 	}
 
 	private async addPackCodes(text: string, provider: PackProvider) {
+		this.setName = provider.id;
+		this.refreshSetDropdown();
+		this.setNameInput?.setValue(this.setName);
 		const codes = text
 			.split(/\r?\n/)
 			.map((line) => line.trim())

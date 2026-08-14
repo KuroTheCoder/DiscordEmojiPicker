@@ -38,7 +38,7 @@ Change the default in **Settings → Insert style**. Emojis and stickers always 
 
 ## Shortcodes
 
-A shortcode is just `:filename:` — for example `:party-parrot:` inserts `.gl-emoji/party-parrot.gif`.
+A shortcode is just `:filename:` — for example `:party-parrot:` inserts `discordemojipicker/emojis/party-parrot.gif`.
 
 - **Typing** — start typing `:` in the editor and the suggest popup lists matching emojis and stickers; press `Enter` to complete.
 - **Rendering** — shortcodes render as images in reading mode, and in live preview / source mode while **Render shortcodes in editor** is enabled (default: on).
@@ -52,9 +52,9 @@ A shortcode is just `:filename:` — for example `:party-parrot:` inserts `.gl-e
 
 A *set* is a subfolder inside your emoji or sticker folder; images in the folder root form the general set.
 
-- Images in `.gl-emoji/animals/` belong to the **animals** set; images in `.gl-emoji/` belong to the general set.
+- Images in `discordemojipicker/emojis/animals/` belong to the **animals** set; images in `discordemojipicker/emojis/` belong to the general set.
 
-The default folders are `.gl-emoji` and `.gl-stickers` — dot-folders, which Obsidian hides from the file explorer so they don't clutter your navigation. You can change them to any folder in the settings.
+The default folders are `discordemojipicker/emojis` and `discordemojipicker/stickers`, so all your media lives in one easy-to-find place. You can change them to any folder in the settings.
 - **On first run**, the plugin seeds a small sample set — the **Cats** emoji set and the **Pets** sticker set — so you can try everything immediately. Delete them whenever you like.
 - **Create / delete / open** sets from **Settings → Emoji sets / Sticker sets**, or from the set dropdown in the import modal.
 - Deleting a set moves every image in it to your trash and removes the folder — you can't undo it, so confirm carefully.
@@ -146,7 +146,7 @@ The variables live on `.gl-picker` — see `styles.css` for the full list.
 
 | Setting | What it does |
 | --- | --- |
-| Emoji folder | Vault folder with emoji images (default `.gl-emoji`); each subfolder becomes a set |
+| Emoji folder | Vault folder with emoji images (default `discordemojipicker/emojis`); each subfolder becomes a set |
 | Sticker folder | Vault folder with sticker images; each subfolder becomes a set |
 | Emoji sets / Sticker sets | Create, delete, or open set folders |
 | Insert style | Shortcode, embed, or HTML when clicking in the picker |
