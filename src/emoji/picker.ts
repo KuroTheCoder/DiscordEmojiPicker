@@ -46,6 +46,7 @@ export class EmojiPicker {
 	private navEl!: HTMLElement;
 	private scrollEl!: HTMLElement;
 	private tooltipEl!: HTMLElement;
+	private tooltipRaf = 0;
 	private footerEl!: HTMLElement;
 	private countEl!: HTMLElement;
 	private emojiSections: Section[] = [];
@@ -88,6 +89,8 @@ export class EmojiPicker {
 	}
 
 	close() {
+		if (this.tooltipRaf) window.cancelAnimationFrame(this.tooltipRaf);
+		this.tooltipRaf = 0;
 		for (const fn of this.cleanup) fn();
 		this.cleanup = [];
 		this.containerEl.remove();
@@ -436,8 +439,11 @@ export class EmojiPicker {
 				loading: 'lazy',
 			},
 		});
-		btn.addEventListener('mousemove', (ev) =>
+		btn.addEventListener('mouseenter', (ev) =>
 			this.showTooltip(ev.clientX, ev.clientY, item),
+		);
+		btn.addEventListener('mousemove', (ev) =>
+			this.moveTooltip(ev.clientX, ev.clientY),
 		);
 		btn.addEventListener('mouseleave', () => this.hideTooltip());
 		btn.addEventListener('click', () => this.insertItem(item));
@@ -530,8 +536,16 @@ export class EmojiPicker {
 			text: item.label,
 		});
 		this.tooltipEl.toggleClass('is-visible', true);
-		this.tooltipEl.style.left = `${clientX}px`;
-		this.tooltipEl.style.top = `${clientY}px`;
+		this.moveTooltip(clientX, clientY);
+	}
+
+	private moveTooltip(clientX: number, clientY: number) {
+		if (this.tooltipRaf) return;
+		this.tooltipRaf = window.requestAnimationFrame(() => {
+			this.tooltipRaf = 0;
+			this.tooltipEl.style.left = `${clientX}px`;
+			this.tooltipEl.style.top = `${clientY}px`;
+		});
 	}
 
 	private hideTooltip() {
