@@ -56,6 +56,7 @@ export class MediaSuggest extends EditorSuggest<MediaFile> {
 				src: this.plugin.app.vault.getResourcePath(item.file),
 				alt: item.label,
 				loading: 'lazy',
+				draggable: 'false',
 			},
 		});
 		const info = row.createDiv({ cls: 'gl-suggest-info' });

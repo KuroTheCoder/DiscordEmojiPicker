@@ -371,7 +371,12 @@ export class EmojiPicker {
 				},
 			});
 			btn.createEl('img', {
-				attr: { src: section.icon, alt: section.label, loading: 'lazy' },
+				attr: {
+					src: section.icon,
+					alt: section.label,
+					loading: 'lazy',
+					draggable: 'false',
+				},
 			});
 		}
 	}
@@ -437,6 +442,7 @@ export class EmojiPicker {
 				src: resourcePath(this.app, item.file),
 				alt: item.label,
 				loading: 'lazy',
+				draggable: 'false',
 			},
 		});
 		btn.addEventListener('mouseenter', (ev) =>
@@ -529,7 +535,11 @@ export class EmojiPicker {
 	private showTooltip(clientX: number, clientY: number, item: MediaFile) {
 		this.tooltipEl.empty();
 		this.tooltipEl.createEl('img', {
-			attr: { src: resourcePath(this.app, item.file), alt: item.label },
+			attr: {
+				src: resourcePath(this.app, item.file),
+				alt: item.label,
+				draggable: 'false',
+			},
 		});
 		this.tooltipEl.createDiv({
 			cls: 'gl-picker-tooltip-label',

@@ -51,6 +51,10 @@ Opening folders in the system file manager is desktop-only. On Windows, if the f
 
 Yes — the plugin is not desktop-only. Image picking, inserting, and importing work on mobile. The **Open folder** buttons and Discord token testing require desktop.
 
+## Known conflicts
+
+- **obsidian-image-converter** ([xRyul/obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter)) — its drag-resize feature attaches handlers to hovered images, including the previews inside this picker, which can make them glitch after a second of hovering. The picker's images are marked `draggable="false"` to reduce interference; if the glitch persists, disable that plugin's drag-resize option (or the plugin) while using the picker.
+
 ## Something still broken?
 
 Open an issue at [github.com/KuroTheCoder/DiscordEmojiPicker/issues](https://github.com/KuroTheCoder/DiscordEmojiPicker/issues) and include: Obsidian version, plugin version, OS, and what you did step by step.

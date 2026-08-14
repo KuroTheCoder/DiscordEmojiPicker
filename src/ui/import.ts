@@ -695,7 +695,12 @@ export class ImportModal extends Modal {
 			attr: { 'data-id': item.id },
 		});
 		row.createEl('img', {
-			attr: { src: this.thumbUrl(item), alt: item.name, loading: 'lazy' },
+			attr: {
+				src: this.thumbUrl(item),
+				alt: item.name,
+				loading: 'lazy',
+				draggable: 'false',
+			},
 		});
 		const info = row.createDiv({ cls: 'gl-import-item-info' });
 		info.createDiv({ cls: 'gl-import-item-name', text: item.name || 'image' });
