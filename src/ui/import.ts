@@ -32,10 +32,10 @@ import {
 	PackProvider,
 	packProviderById,
 	packUrlForCode,
-	POPULAR_SET,
+	POPULAR_CATEGORIES,
 	normalizeCode,
 } from '../packs';
-import { renderSystemEmojiPng, SYSTEM_EMOJI } from '../system-emoji';
+import { renderSystemEmojiPng, SYSTEM_EMOJI_GROUPS } from '../system-emoji';
 
 type ImportMode = 'url' | 'discord' | 'clipboard' | 'note' | 'pack';
 
@@ -63,6 +63,7 @@ interface QueuedItem {
 	vaultPath?: string;
 	data?: ArrayBuffer;
 	mime?: string;
+	setName?: string;
 	status?: 'pending' | 'ok' | 'fail';
 }
 
@@ -409,7 +410,7 @@ export class ImportModal extends Modal {
 				});
 				box.createDiv({
 					cls: 'gl-import-hint',
-					text: 'Download whole emoji sets from open-license packs and save them into the folder above.',
+					text: 'Download whole emoji sets from open-license packs and save them into the folder above. The popular set is split into sub-category sets like “twemoji-faces” and “twemoji-animals”.',
 				});
 				new Setting(box)
 					.setName('Pack')
@@ -440,7 +441,7 @@ export class ImportModal extends Modal {
 					text: 'Add popular set',
 					attr: { type: 'button' },
 				}).addEventListener('click', () => {
-					void this.addPackCodes(POPULAR_SET.join('\n'), provider);
+					void this.addPopularSet(provider);
 				});
 				box.createEl('button', {
 					cls: 'gl-import-action',
@@ -468,6 +469,12 @@ export class ImportModal extends Modal {
 	private handleDrop(ev: DragEvent) {
 		const dt = ev.dataTransfer;
 		if (!dt) return;
+		const droppedSet = this.suggestSetFromDrop(dt);
+		if (droppedSet && !this.setName) {
+			this.setName = droppedSet;
+			this.refreshSetDropdown();
+			this.setNameInput?.setValue(droppedSet);
+		}
 		for (const file of Array.from(dt.files ?? [])) {
 			if (!SUPPORTED_EXTENSIONS.has(extFromFileName(file.name))) continue;
 			void file.arrayBuffer().then((data) => {
@@ -534,24 +541,24 @@ export class ImportModal extends Modal {
 	}
 
 	private async addSystemEmojis() {
-		this.setName = 'system';
-		this.refreshSetDropdown();
-		this.setNameInput?.setValue(this.setName);
 		this.setStatus('Rendering system emoji set...');
 		let added = 0;
 		const failed: string[] = [];
-		for (const emoji of SYSTEM_EMOJI) {
-			try {
-				const data = await renderSystemEmojiPng(emoji.char);
-				this.queueItem({
-					name: emoji.name,
-					kind: this.kind,
-					data,
-					mime: 'image/png',
-				});
-				added++;
-			} catch {
-				failed.push(emoji.name);
+		for (const group of SYSTEM_EMOJI_GROUPS) {
+			for (const emoji of group.items) {
+				try {
+					const data = await renderSystemEmojiPng(emoji.char);
+					this.queueItem({
+						name: emoji.name,
+						kind: this.kind,
+						data,
+						mime: 'image/png',
+						setName: `system-${group.category}`,
+					});
+					added++;
+				} catch {
+					failed.push(emoji.name);
+				}
 			}
 		}
 		this.setStatus(
@@ -559,6 +566,33 @@ export class ImportModal extends Modal {
 				(failed.length
 					? `, ${failed.length} failed: ${failed.slice(0, 8).join(', ')}${failed.length > 8 ? '...' : ''}.`
 					: '.'),
+		);
+	}
+
+	private async addPopularSet(provider: PackProvider) {
+		this.setStatus('Resolving emoji names...');
+		let added = 0;
+		let failed = 0;
+		for (const category of POPULAR_CATEGORIES) {
+			for (const code of category.codes) {
+				const url = await packUrlForCode(code, provider);
+				if (url) {
+					const clean = normalizeCode(code).replace(/[^a-z0-9_-]/g, '');
+					this.queueItem({
+						name: clean || code,
+						kind: 'emoji',
+						url,
+						setName: `${provider.id}-${category.name}`,
+					});
+					added++;
+				} else {
+					failed++;
+				}
+			}
+		}
+		this.setStatus(
+			`Queued ${added} emoji(s) in ${POPULAR_CATEGORIES.length} categories` +
+				(failed ? `, ${failed} not found.` : '.'),
 		);
 	}
 
@@ -578,7 +612,12 @@ export class ImportModal extends Modal {
 			const url = await packUrlForCode(code, provider);
 			if (url) {
 				const clean = normalizeCode(code).replace(/[^a-z0-9_-]/g, '');
-				this.queueItem({ name: clean || code, kind: 'emoji', url });
+				this.queueItem({
+					name: clean || code,
+					kind: 'emoji',
+					url,
+					setName: `${provider.id}-custom`,
+				});
 				added++;
 			} else {
 				failed++;
@@ -587,6 +626,20 @@ export class ImportModal extends Modal {
 		this.setStatus(
 			`Queued ${added} emoji(s)` + (failed ? `, ${failed} not found.` : '.'),
 		);
+	}
+
+	private suggestSetFromDrop(dt: DataTransfer): string {
+		for (const file of Array.from(dt.files ?? [])) {
+			const rel = file.webkitRelativePath;
+			if (!rel) continue;
+			const parts = rel.split('/').filter(Boolean);
+			if (parts.length < 2) continue;
+			const first = parts[0];
+			if (!first) continue;
+			const name = sanitizeName(first);
+			if (name) return name;
+		}
+		return '';
 	}
 
 	private renderDiscordServer(box: HTMLElement) {
@@ -865,13 +918,14 @@ async function importQueuedItem(
 	app: App,
 	plugin: DiscordEmojiPickerPlugin,
 	item: QueuedItem,
-	setName: string,
+	modalSetName: string,
 ): Promise<boolean> {
 	const folder =
 		item.kind === 'emoji'
 			? plugin.settings.emojiFolder
 			: plugin.settings.stickerFolder;
 	if (!folder.trim()) return false;
+	const setName = item.setName ?? modalSetName;
 	const target = { folder, setName };
 	if (item.data) {
 		return saveImage(app, item.data, item.mime ?? '', target, item.name);

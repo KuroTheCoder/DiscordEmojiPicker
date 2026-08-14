@@ -96,14 +96,16 @@ Insert any image already embedded in the current note (`![[...]]` links or `<img
 Download whole emoji sets from open-license packs and save them into the destination folder:
 
 1. Pick a **pack** (Twemoji, Noto Emoji, or OpenMoji).
-2. Press **Add popular set** to queue ~250 of the most common emojis, or type names yourself (one per line, e.g. `smile`, `joy`, `:heart:` — Discord-style names like `sweat_smile` work too).
+2. Press **Add popular set** to queue the 211 most common emojis, or type names yourself (one per line, e.g. `smile`, `joy`, `:heart:` — Discord-style names like `sweat_smile` work too).
 3. Press **Import** to download them all at once.
+
+The popular set is split into sub-category sets (faces, gestures, hearts, nature, party, objects, travel, food, animals) — each becomes its own set in the picker, e.g. **twemoji-faces** or **noto-animals** in `discordemojipicker/emojis/`. Custom names typed in the box import into a single `<pack>-custom` set. The same categories apply to the system emoji set (`system-faces`, `system-food`, ...).
 
 Each pack is fetched from the jsDelivr CDN and licensed for free reuse (Twemoji CC-BY 4.0, Noto Emoji Apache 2.0 / OFL, OpenMoji CC BY-SA 4.0).
 
-**No internet?** Press **Add system emoji set (offline)** — it renders ~250 emojis locally from the emoji font on your device (e.g. Segoe UI Emoji on Windows) and queues them as images, no download needed.
+**No internet?** Press **Add system emoji set (offline)** — it renders ~240 emojis locally from the emoji font on your device (e.g. Segoe UI Emoji on Windows) and queues them as images, no download needed.
 
-Want more variety? Sites like [emoji.gg](https://emoji.gg/) host thousands of emoji packs you can download and drag into your emoji or sticker folders.
+Want more variety? Sites like [emoji.gg](https://emoji.gg/) host thousands of emoji packs you can download and drag into your emoji or sticker folders. Dragging in a whole folder of images auto-fills the **Set (subfolder)** box with the folder's name — change it before importing if you'd rather group them differently.
 
 ## Cloning from Discord servers
 

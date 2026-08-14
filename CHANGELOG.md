@@ -6,8 +6,10 @@ All notable changes to Discord Emoji Picker.
 
 ### Added
 
+- **Sub-category sets for packs**: the popular set and the system emoji set now split into category sets (faces, gestures, hearts, nature, party, objects, travel, food, animals) named like `twemoji-faces` or `system-food`, so the picker shows them as organized, browsable sets.
+- **Folder-name auto-suggest on drop**: dragging in a whole folder of images fills the **Set (subfolder)** field with the source folder's name — still editable before importing.
 - **System emoji set (offline)**: the Emoji pack tab can render ~240 emojis locally from your device's emoji font (Segoe UI Emoji on Windows) with no download.
-- **Per-provider set folders**: importing a pack (Twemoji, Noto Emoji, OpenMoji) or the system emoji set automatically creates a matching set folder (e.g. `discordemojipicker/emojis/twemoji/`), so sets stay organized without manual setup.
+- **Per-provider set folders**: custom names typed into the pack tab import into a `<pack>-custom` set (e.g. `discordemojipicker/emojis/twemoji-custom/`), so sets stay organized without manual setup.
 
 ### Changed
 

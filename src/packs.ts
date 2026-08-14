@@ -139,35 +139,90 @@ function codepoints(char: string, separator: string): string {
 		.join(separator);
 }
 
-export const POPULAR_SET: string[] = [
-	'smile', 'grin', 'joy', 'laughing', 'sweat_smile', 'wink', 'blush',
-	'heart_eyes', 'kissing_heart', 'kissing_smiling_eyes', 'stuck_out_tongue_winking_eye',
-	'stuck_out_tongue_closed_eyes', 'sunglasses', 'nerd_face', 'smirk', 'unamused',
-	'rolling_eyes', 'thinking', 'neutral_face', 'expressionless', 'slightly_smiling_face',
-	'slightly_frowning_face', 'hugging_face', 'star_struck', 'zany_face', 'party_face',
-	'cold_sweat', 'sleepy', 'tired_face', 'worried', 'frowning', 'anguished', 'cry',
-	'sob', 'weary', 'confused', 'disappointed', 'fearful', 'scream', 'open_mouth',
-	'astonished', 'flushed', 'relieved', 'dizzy_face', 'angry', 'rage', 'pensive',
-	'no_mouth', 'grimacing', 'smiling_imp', 'imp', 'skull', 'ghost', 'alien', 'robot',
-	'clap', 'thumbsup', 'thumbsdown', 'ok_hand', 'fist', 'muscle', 'pray', 'wave',
-	'point_up', 'point_down', 'point_left', 'point_right', 'raised_hands', 'handshake',
-	'vulcan_salute', 'victory', 'metal', 'fingers_crossed', 'heart', 'broken_heart',
-	'two_hearts', 'sparkling_heart', 'growing_heart', 'fire', 'star', 'star2', 'sparkles',
-	'boom', 'zap', 'rainbow', 'sunny', 'sun_with_face', 'moon', 'cloud', 'snowflake',
-	'umbrella', 'tornado', 'volcano', 'ocean', 'droplet', 'sweat_drops', 'eyes', 'ear',
-	'nose', 'mouth', 'tongue', 'baby', 'child', 'boy', 'girl', 'man', 'woman',
-	'family', 'couple', 'love_letter', 'gift', 'birthday', 'cake', 'balloon', 'tada',
-	'confetti_ball', 'fireworks', 'sparkler', 'party_popper', 'clapper', 'musical_note',
-	'notes', 'headphones', 'guitar', 'drum', 'video_game', 'game_die', 'trophy',
-	'medal', 'money_bag', 'dollar', 'credit_card', 'money_with_wings', 'rocket',
-	'airplane', 'car', 'bus', 'train', 'bike', 'sailboat', 'phone', 'mobile_phone',
-	'computer', 'laptop', 'camera', 'video_camera', 'movie_camera', 'popcorn', 'pizza',
-	'hamburger', 'fries', 'hotdog', 'taco', 'burrito', 'icecream', 'doughnut', 'cookie',
-	'chocolate_bar', 'candy', 'lollipop', 'beer', 'wine_glass', 'cocktail', 'coffee',
-	'tea', 'milk_glass', 'apple', 'banana', 'watermelon', 'grapes', 'peach', 'cherry',
-	'strawberry', 'panda_face', 'cat', 'dog', 'lion', 'tiger', 'monkey', 'koala',
-	'poodle', 'rabbit', 'frog', 'unicorn', 'snail', 'bug', 'butterfly', 'turtle',
-	'penguin', 'bird', 'chicken', 'hatching_chick', 'duck', 'eagle', 'owl', 'fox',
-	'bee', 'ant', 'lady_beetle', 'fish', 'dolphin', 'whale', 'octopus', 'crab',
-	'shrimp', 'squid', 'snake', 'dragon', 'dragon_face', 't_rex', 'whale2',
+export interface PackCategory {
+	name: string;
+	codes: string[];
+}
+
+export const POPULAR_CATEGORIES: PackCategory[] = [
+	{
+		name: 'faces',
+		codes: [
+			'smile', 'grin', 'joy', 'laughing', 'sweat_smile', 'wink', 'blush',
+			'heart_eyes', 'kissing_heart', 'kissing_smiling_eyes',
+			'stuck_out_tongue_winking_eye', 'stuck_out_tongue_closed_eyes',
+			'sunglasses', 'nerd_face', 'smirk', 'unamused', 'rolling_eyes',
+			'thinking', 'neutral_face', 'expressionless', 'slightly_smiling_face',
+			'slightly_frowning_face', 'hugging_face', 'star_struck', 'zany_face',
+			'party_face', 'cold_sweat', 'sleepy', 'tired_face', 'worried',
+			'frowning', 'anguished', 'cry', 'sob', 'weary', 'confused',
+			'disappointed', 'fearful', 'scream', 'open_mouth', 'astonished',
+			'flushed', 'relieved', 'dizzy_face', 'angry', 'rage', 'pensive',
+			'no_mouth', 'grimacing', 'smiling_imp', 'imp', 'skull', 'ghost',
+			'alien', 'robot', 'eyes', 'ear', 'nose', 'mouth', 'tongue', 'baby',
+			'child', 'boy', 'girl', 'man', 'woman', 'family', 'couple',
+		],
+	},
+	{
+		name: 'gestures',
+		codes: [
+			'clap', 'thumbsup', 'thumbsdown', 'ok_hand', 'fist', 'muscle', 'pray',
+			'wave', 'point_up', 'point_down', 'point_left', 'point_right',
+			'raised_hands', 'handshake', 'vulcan_salute', 'victory', 'metal',
+			'fingers_crossed',
+		],
+	},
+	{
+		name: 'hearts',
+		codes: ['heart', 'broken_heart', 'two_hearts', 'sparkling_heart', 'growing_heart', 'love_letter'],
+	},
+	{
+		name: 'nature',
+		codes: [
+			'fire', 'star', 'star2', 'sparkles', 'boom', 'zap', 'rainbow',
+			'sunny', 'sun_with_face', 'moon', 'cloud', 'snowflake', 'umbrella',
+			'tornado', 'volcano', 'ocean', 'droplet', 'sweat_drops',
+		],
+	},
+	{
+		name: 'party',
+		codes: [
+			'gift', 'birthday', 'balloon', 'tada', 'confetti_ball', 'fireworks',
+			'sparkler', 'party_popper',
+		],
+	},
+	{
+		name: 'objects',
+		codes: [
+			'clapper', 'musical_note', 'notes', 'headphones', 'guitar', 'drum',
+			'video_game', 'game_die', 'trophy', 'medal', 'money_bag', 'dollar',
+			'credit_card', 'money_with_wings', 'phone', 'mobile_phone', 'computer',
+			'laptop', 'camera', 'video_camera', 'movie_camera',
+		],
+	},
+	{
+		name: 'travel',
+		codes: ['rocket', 'airplane', 'car', 'bus', 'train', 'bike', 'sailboat'],
+	},
+	{
+		name: 'food',
+		codes: [
+			'popcorn', 'pizza', 'hamburger', 'fries', 'hotdog', 'taco', 'burrito',
+			'icecream', 'doughnut', 'cookie', 'chocolate_bar', 'candy', 'lollipop',
+			'beer', 'wine_glass', 'cocktail', 'coffee', 'tea', 'milk_glass',
+			'apple', 'banana', 'watermelon', 'grapes', 'peach', 'cherry',
+			'strawberry', 'cake',
+		],
+	},
+	{
+		name: 'animals',
+		codes: [
+			'panda_face', 'cat', 'dog', 'lion', 'tiger', 'monkey', 'koala',
+			'poodle', 'rabbit', 'frog', 'unicorn', 'snail', 'bug', 'butterfly',
+			'turtle', 'penguin', 'bird', 'chicken', 'hatching_chick', 'duck',
+			'eagle', 'owl', 'fox', 'bee', 'ant', 'lady_beetle', 'fish', 'dolphin',
+			'whale', 'octopus', 'crab', 'shrimp', 'squid', 'snake', 'dragon',
+			'dragon_face', 't_rex', 'whale2',
+		],
+	},
 ];
