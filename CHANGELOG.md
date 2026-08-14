@@ -2,7 +2,7 @@
 
 All notable changes to Discord Emoji Picker.
 
-## Unreleased
+## 1.2.0 - 2026-08-14
 
 ### Added
 
