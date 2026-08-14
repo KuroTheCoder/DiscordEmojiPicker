@@ -98,6 +98,10 @@ export class ImportModal extends Modal {
 	private nextId = 1;
 	private objectUrls: string[] = [];
 	private importing = false;
+	private cancelImport = false;
+	private importBtn!: HTMLButtonElement;
+	private cancelBtn!: HTMLButtonElement;
+	private clearBtn!: HTMLButtonElement;
 	private setNameInput?: TextComponent;
 	private setDropdown!: DropdownComponent;
 	private guilds: DiscordGuild[] = [];
@@ -258,26 +262,32 @@ export class ImportModal extends Modal {
 		this.renderQueue();
 
 		const footer = contentEl.createDiv({ cls: 'gl-import-footer' });
-		footer
-			.createEl('button', {
-				cls: 'mod-cta',
-				text: 'Import',
-				attr: { type: 'button' },
-			})
-			.addEventListener('click', () => {
-				void this.runImport();
-			});
-		footer
-			.createEl('button', {
-				text: 'Clear',
-				attr: { type: 'button' },
-			})
-			.addEventListener('click', () => {
-				this.queue = [];
-				this.nextId = 1;
-				this.renderQueue();
-				this.setStatus('');
-			});
+		this.importBtn = footer.createEl('button', {
+			cls: 'mod-cta',
+			text: 'Import',
+			attr: { type: 'button' },
+		});
+		this.importBtn.addEventListener('click', () => {
+			void this.runImport();
+		});
+		this.cancelBtn = footer.createEl('button', {
+			cls: 'gl-import-hidden',
+			text: 'Cancel',
+			attr: { type: 'button' },
+		});
+		this.cancelBtn.addEventListener('click', () => {
+			this.cancelImport = true;
+		});
+		this.clearBtn = footer.createEl('button', {
+			text: 'Clear',
+			attr: { type: 'button' },
+		});
+		this.clearBtn.addEventListener('click', () => {
+			this.queue = [];
+			this.nextId = 1;
+			this.renderQueue();
+			this.setStatus('');
+		});
 	}
 
 	onClose() {
@@ -862,7 +872,24 @@ export class ImportModal extends Modal {
 			});
 			return;
 		}
-		for (const item of this.queue) this.renderQueueItem(item);
+		const groups = new Map<string, QueuedItem[]>();
+		for (const item of this.queue) {
+			const label = this.groupLabel(item);
+			const group = groups.get(label);
+			if (group) group.push(item);
+			else groups.set(label, [item]);
+		}
+		for (const [label, items] of groups) {
+			this.queueEl.createDiv({ cls: 'gl-import-group', text: label });
+			for (const item of items) this.renderQueueItem(item);
+		}
+	}
+
+	private groupLabel(item: QueuedItem): string {
+		const set = (item.setName ?? this.setName).trim();
+		const category = (item.category ?? this.setCategory).trim();
+		if (!set) return 'Folder root';
+		return category ? `${set} / ${category}` : set;
 	}
 
 	private renderQueueItem(item: QueuedItem) {
@@ -931,7 +958,7 @@ export class ImportModal extends Modal {
 		return item.url ?? '';
 	}
 
-	private async runImport() {
+private async runImport() {
 		if (this.importing) return;
 		const pending = this.queue.filter(
 			(item) => !item.status || item.status === 'pending',
@@ -941,25 +968,41 @@ export class ImportModal extends Modal {
 			return;
 		}
 		this.importing = true;
-		this.setStatus('Importing...');
+		this.cancelImport = false;
+		this.importBtn.toggleClass('gl-import-hidden', true);
+		this.clearBtn.toggleClass('gl-import-hidden', true);
+		this.cancelBtn.toggleClass('gl-import-hidden', false);
+		const total = pending.length;
+		let done = 0;
 		let success = 0;
 		let failed = 0;
+		this.setStatus(`Importing 0 of ${total}...`);
 		for (const item of pending) {
+			if (this.cancelImport) break;
 			const ok = await importQueuedItem(
-					this.app,
-					this.plugin,
-					item,
-					this.setName,
-					this.setCategory,
-				);
+				this.app,
+				this.plugin,
+				item,
+				this.setName,
+				this.setCategory,
+			);
 			item.status = ok ? 'ok' : 'fail';
 			if (ok) success++;
 			else failed++;
+			done++;
 			this.updateItemStatus(item.id);
+			this.setStatus(`Importing ${done} of ${total}...`);
 			await delay(60);
 		}
 		this.importing = false;
-		this.setStatus(`Done: ${success} imported, ${failed} failed.`);
+		this.importBtn.toggleClass('gl-import-hidden', false);
+		this.clearBtn.toggleClass('gl-import-hidden', false);
+		this.cancelBtn.toggleClass('gl-import-hidden', true);
+		this.setStatus(
+			this.cancelImport
+				? `Cancelled after ${done} — ${success} imported, ${failed} failed.`
+				: `Done: ${success} imported, ${failed} failed.`,
+		);
 		if (success > 0) {
 			new Notice(`Imported ${success} image${success === 1 ? '' : 's'}.`);
 			this.plugin.refreshPicker();

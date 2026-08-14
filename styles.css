@@ -259,6 +259,8 @@
 
 .gl-picker-section {
 	margin-bottom: 2px;
+	content-visibility: auto;
+	contain-intrinsic-size: auto 220px;
 }
 
 .gl-picker-section-title {
@@ -370,6 +372,8 @@
 	pointer-events: none;
 	z-index: var(--layer-modal);
 	transform: translate(-50%, -110%);
+	transition: opacity 120ms ease;
+	opacity: 0;
 	background: var(--gl-bg);
 	border: 1px solid var(--gl-border);
 	border-radius: var(--gl-radius-lg);
@@ -380,6 +384,7 @@
 
 .gl-picker-tooltip.is-visible {
 	display: flex;
+	opacity: 1;
 }
 
 .gl-picker-tooltip img {
@@ -898,5 +903,72 @@
 	.gl-picker-nav-item {
 		animation: none !important;
 		transition: none !important;
+	}
+}
+
+.gl-picker {
+	touch-action: manipulation;
+	animation: gl-panel-in 160ms ease-out both;
+}
+
+@keyframes gl-panel-in {
+	from {
+		opacity: 0;
+		transform: scale(0.97) translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+.gl-picker-nav,
+.gl-picker-grid {
+	user-select: none;
+}
+
+.gl-import-group {
+	margin-top: 8px;
+	padding: 2px 4px;
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	color: var(--gl-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.gl-import-group:first-child {
+	margin-top: 0;
+}
+
+.gl-folder-status {
+	margin-top: 4px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+.gl-prompt-input {
+	width: 100%;
+	margin: 8px 0;
+}
+
+@media (hover: none) and (pointer: coarse) {
+	.gl-picker-nav {
+		flex-basis: 52px;
+	}
+
+	.gl-picker-nav-item {
+		width: 40px;
+		height: 40px;
+	}
+
+	.gl-picker-cat {
+		padding: 6px 14px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.gl-picker {
+		animation: none !important;
 	}
 }

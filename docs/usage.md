@@ -57,12 +57,12 @@ A *set* is a subfolder inside your emoji or sticker folder; images in the folder
 
 The default folders are `discordemojipicker/emojis` and `discordemojipicker/stickers`, so all your media lives in one easy-to-find place. You can change them to any folder in the settings.
 - **On first run**, the plugin seeds a small sample set — the **Cats** emoji set and the **Pets** sticker set — so you can try everything immediately. Delete them whenever you like.
-- **Create / delete / open** sets from **Settings → Emoji sets / Sticker sets**, or from the set dropdown in the import modal.
+- **Create / delete / rename / open** sets from **Settings → Emoji sets / Sticker sets**, or from the set dropdown in the import modal.
 - Deleting a set moves every image in it to your trash and removes the folder — you can't undo it, so confirm carefully.
 
 ## Importing emojis & stickers
 
-Run **Import emojis & stickers** to open the import modal. Everything you add lands in a **queue**; press **Import** to download them all at once. Each item shows a ✓ or ✕ once it's processed.
+Run **Import emojis & stickers** to open the import modal. Everything you add lands in a **queue**, grouped by the target set and category; press **Import** to download them all at once, or **Cancel** mid-way to stop. Each item shows a ✓ or ✕ once it's processed, and a live progress counter tracks the run.
 
 ![The import modal with a queue of emojis and stickers](screenshots/import.svg)
 

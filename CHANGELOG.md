@@ -16,6 +16,11 @@ All notable changes to Discord Emoji Picker.
 
 ### Changed
 
+- **Picker feel**: the panel now animates in, tooltips fade, grid items lift on hover, and the rise-stagger is capped so large sets animate quickly.
+- **Set order**: **General** now always sits first, followed by sets alphabetically.
+- **Import feedback**: the queue is grouped by target set/category, a live **Importing x of y** counter runs during imports, and a **Cancel** button lets you stop a large import mid-way (finished items are kept).
+- **Settings**: every set row gained a **Rename** action, and the emoji/sticker folder settings now show the resolved path and whether the folder exists yet.
+- **Touch devices**: bigger tap targets (nav, category pills) and tap-fast handling on the picker.
 - Default folders are now `discordemojipicker/emojis` and `discordemojipicker/stickers` — a visible, single home for all media instead of hidden dot-folders. Existing installs keep their current folders.
 
 ### Fixed

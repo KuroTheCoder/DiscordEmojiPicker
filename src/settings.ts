@@ -8,6 +8,7 @@ import {
 	SettingDefinitionRender,
 	SettingGroupItem,
 	SliderComponent,
+	TFolder,
 } from 'obsidian';
 import DiscordEmojiPickerPlugin from './main';
 import { DiscordClient, DiscordTokenType } from './discord';
@@ -16,7 +17,10 @@ import {
 	deleteSet,
 	ensureFolder,
 	listSets,
+	normalizeFolder,
 	openFolder,
+	promptAction,
+	renameSet,
 	setFolderPath,
 } from './utils/folders';
 
@@ -74,10 +78,10 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl)
+		const emojiFolderSetting = new Setting(containerEl)
 			.setName('Emoji folder')
 			.setDesc(
-				'Vault folder with emoji images (PNG/GIF/webp). Each subfolder becomes a set; images in the folder root form the general set.',
+				'Vault folder with emoji images (PNG/GIF/webp). Each subfolder becomes a set; a second level of subfolders becomes categories, shown as a horizontal bar in the picker.',
 			)
 			.setTooltip('Images inside this folder appear under the emoji pill.')
 			.addText((text) =>
@@ -87,6 +91,7 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.emojiFolder = value.trim();
 						await this.plugin.saveSettings();
+						updateEmojiStatus();
 					}),
 			)
 			.addExtraButton((btn) =>
@@ -97,13 +102,21 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 						openFolder(this.app, this.plugin.settings.emojiFolder),
 					),
 			);
+		const updateEmojiStatus = () => {
+			emojiFolderSetting.settingEl.querySelector('.gl-folder-status')?.remove();
+			emojiFolderSetting.settingEl.createDiv({
+				cls: 'gl-folder-status',
+				text: this.folderStatus(this.plugin.settings.emojiFolder),
+			});
+		};
+		updateEmojiStatus();
 
 		this.buildSetManager(containerEl, 'emoji');
 
-		new Setting(containerEl)
+		const stickerFolderSetting = new Setting(containerEl)
 			.setName('Sticker folder')
 			.setDesc(
-				'Vault folder with sticker images (PNG/GIF/webp). Each subfolder becomes a set; images in the folder root form the general set.',
+				'Vault folder with sticker images (PNG/GIF/webp). Each subfolder becomes a set; a second level of subfolders becomes categories, shown as a horizontal bar in the picker.',
 			)
 			.setTooltip('Images inside this folder appear under the sticker pill.')
 			.addText((text) =>
@@ -113,6 +126,7 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.stickerFolder = value.trim();
 						await this.plugin.saveSettings();
+						updateStickerStatus();
 					}),
 			)
 			.addExtraButton((btn) =>
@@ -123,6 +137,16 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 						openFolder(this.app, this.plugin.settings.stickerFolder),
 					),
 			);
+		const updateStickerStatus = () => {
+			stickerFolderSetting.settingEl
+				.querySelector('.gl-folder-status')
+				?.remove();
+			stickerFolderSetting.settingEl.createDiv({
+				cls: 'gl-folder-status',
+				text: this.folderStatus(this.plugin.settings.stickerFolder),
+			});
+		};
+		updateStickerStatus();
 
 		this.buildSetManager(containerEl, 'sticker');
 
@@ -432,6 +456,7 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 						.onChange(async (value) => {
 							this.plugin.settings[key] = value.trim();
 							await this.plugin.saveSettings();
+							updateStatus();
 						}),
 				);
 				setting.addExtraButton((btn) =>
@@ -442,6 +467,13 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 							openFolder(this.app, this.plugin.settings[key]),
 						),
 				);
+				const statusEl = setting.settingEl.createDiv({
+					cls: 'gl-folder-status',
+				});
+				const updateStatus = () => {
+					statusEl.setText(this.folderStatus(this.plugin.settings[key]));
+				};
+				updateStatus();
 			},
 		);
 	}
@@ -583,7 +615,7 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 		}
 		for (const set of sets) {
 			items.push(
-				this.settingDef(set, '', 'Open or delete this set.', ['set'], (setting) => {
+				this.settingDef(set, '', 'Open, rename or delete this set.', ['set'], (setting) => {
 					setting.addExtraButton((btn) =>
 						btn
 							.setIcon('folder-open')
@@ -591,6 +623,12 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 							.onClick(() =>
 								openFolder(this.app, setFolderPath(folder, set)),
 							),
+					);
+					setting.addExtraButton((btn) =>
+						btn
+							.setIcon('pencil')
+							.setTooltip('Rename set')
+							.onClick(() => void this.askRenameSet(kind, set)),
 					);
 					setting.addExtraButton((btn) =>
 						btn
@@ -641,6 +679,33 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 		return items;
 	}
 
+	private async askRenameSet(kind: 'emoji' | 'sticker', set: string) {
+		const folder =
+			kind === 'emoji'
+				? this.plugin.settings.emojiFolder
+				: this.plugin.settings.stickerFolder;
+		const next = await promptAction(
+			this.app,
+			`Rename set "${set}"`,
+			'New set name',
+			set,
+		);
+		if (!next || next === set) return;
+		const ok = await renameSet(this.app, folder, set, next);
+		new Notice(ok ? `Renamed set to "${next}".` : 'Could not rename the set.');
+		if (ok) this.refresh();
+	}
+
+	private folderStatus(path: string): string {
+		const normalized = normalizeFolder(path);
+		if (!normalized) return 'No folder set — the picker shows nothing until one is set.';
+		const exists =
+			this.app.vault.getAbstractFileByPath(normalized) instanceof TFolder;
+		return exists
+			? `Resolved: ${normalized} — exists`
+			: `Resolved: ${normalized} — will be created on next launch`;
+	}
+
 	private refresh(): void {
 		const tab = this as unknown as {
 			update?: () => void;
@@ -680,6 +745,12 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 						.onClick(() =>
 							openFolder(this.app, setFolderPath(folder, set)),
 						),
+				)
+				.addExtraButton((btn) =>
+					btn
+						.setIcon('pencil')
+						.setTooltip('Rename set')
+						.onClick(() => void this.askRenameSet(kind, set)),
 				)
 				.addExtraButton((btn) =>
 					btn

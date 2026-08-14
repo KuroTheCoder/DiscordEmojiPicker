@@ -81,6 +81,38 @@ export async function deleteSet(
 	}
 }
 
+export async function renameSet(
+	app: App,
+	folder: string,
+	oldName: string,
+	newName: string,
+): Promise<boolean> {
+	const root = normalizeFolder(folder);
+	const old = normalizeFolder(oldName);
+	const next = normalizeFolder(newName);
+	if (!root || !old || !next || old === next) return false;
+	const oldDir = `${root}/${old}`;
+	const newDir = `${root}/${next}`;
+	if (!(app.vault.getAbstractFileByPath(oldDir) instanceof TFolder)) {
+		return false;
+	}
+	if (app.vault.getAbstractFileByPath(newDir)) return false;
+	for (const file of listFilesInFolder(app, oldDir)) {
+		const rel = file.path.slice(oldDir.length + 1);
+		try {
+			await app.fileManager.renameFile(file, `${newDir}/${rel}`);
+		} catch {
+			return false;
+		}
+	}
+	try {
+		await app.vault.adapter.rmdir(oldDir, true);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 export function openFolder(app: App, dir: string): void {
 	if (!Platform.isDesktopApp) {
 		new Notice('Opening folders is only available on desktop.');
@@ -132,6 +164,67 @@ export function confirmAction(
 		const modal = new ConfirmModal(app, title, message, confirmLabel, resolve);
 		modal.open();
 	});
+}
+
+export function promptAction(
+	app: App,
+	title: string,
+	placeholder: string,
+	initial = '',
+): Promise<string | null> {
+	return new Promise((resolve) => {
+		const modal = new PromptModal(app, title, placeholder, initial, resolve);
+		modal.open();
+	});
+}
+
+class PromptModal extends Modal {
+	constructor(
+		app: App,
+		private title: string,
+		private placeholder: string,
+		private initial: string,
+		private onResult: (value: string | null) => void,
+	) {
+		super(app);
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.createEl('h3', { text: this.title });
+		const input = contentEl.createEl('input', {
+			cls: 'gl-prompt-input',
+			attr: {
+				type: 'text',
+				placeholder: this.placeholder,
+				spellcheck: 'false',
+			},
+		});
+		input.value = this.initial;
+		const row = contentEl.createDiv({ cls: 'gl-confirm-row' });
+		row.createEl('button', {
+			text: 'Cancel',
+			attr: { type: 'button' },
+		}).addEventListener('click', () => {
+			this.onResult(null);
+			this.close();
+		});
+		row.createEl('button', {
+			cls: 'mod-cta',
+			text: 'Rename',
+			attr: { type: 'button' },
+		}).addEventListener('click', () => {
+			this.onResult(input.value.trim());
+			this.close();
+		});
+		input.addEventListener('keydown', (ev) => {
+			if (ev.key !== 'Enter') return;
+			this.onResult(input.value.trim());
+			this.close();
+		});
+		window.setTimeout(() => input.focus(), 0);
+	}
 }
 
 class ConfirmModal extends Modal {

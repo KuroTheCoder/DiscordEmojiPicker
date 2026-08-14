@@ -216,6 +216,7 @@ export class EmojiPicker {
 				icon: randomThumb(this.app, items),
 			});
 		}
+		orderSections(this.emojiSections);
 
 		for (const [setName, items] of groupBy(stickerFiles, (f) => f.set)) {
 			this.stickerSections.push({
@@ -227,6 +228,7 @@ export class EmojiPicker {
 				icon: randomThumb(this.app, items),
 			});
 		}
+		orderSections(this.stickerSections);
 	}
 
 	private buildTabs(container: HTMLElement) {
@@ -390,6 +392,7 @@ export class EmojiPicker {
 				attr: {
 					src: section.icon,
 					alt: section.label,
+					title: section.label,
 					loading: 'lazy',
 					draggable: 'false',
 				},
@@ -469,6 +472,7 @@ export class EmojiPicker {
 		this.activeKey = section.key;
 		this.renderCategories(section);
 
+		this.scrollEl.scrollTop = 0;
 		const sectionEl = this.scrollEl.createDiv({
 			cls: 'gl-picker-section',
 			attr: { 'data-key': section.key },
@@ -566,7 +570,7 @@ export class EmojiPicker {
 			cls: type === 'sticker' ? 'gl-sticker' : 'gl-emoji',
 			attr: { type: 'button' },
 		});
-		btn.style.setProperty('--gl-i', String(index));
+		btn.style.setProperty('--gl-i', String(Math.min(index, 24)));
 		btn.createEl('img', {
 			attr: {
 				src: resourcePath(this.app, item.file),
@@ -717,7 +721,24 @@ export class EmojiPicker {
 		if (!isArrow && !isEnter) return;
 
 		const buttons = this.visibleButtons();
+		const catButtons = this.visibleCats();
 		const active = activeDocument.activeElement as HTMLElement | null;
+
+		if (catButtons.includes(active as HTMLButtonElement)) {
+			const idx = catButtons.indexOf(active as HTMLButtonElement);
+			if (isEnter) {
+				ev.preventDefault();
+				catButtons[idx]?.click();
+			} else if (isArrow) {
+				ev.preventDefault();
+				const next =
+					ev.key === 'ArrowRight' || ev.key === 'ArrowDown'
+						? (idx + 1) % catButtons.length
+						: (idx - 1 + catButtons.length) % catButtons.length;
+				catButtons[next]?.focus();
+			}
+			return;
+		}
 
 		if (active === this.searchInput) {
 			if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') {
@@ -758,6 +779,13 @@ export class EmojiPicker {
 			(el) => el as HTMLButtonElement,
 		);
 	}
+
+	private visibleCats(): HTMLButtonElement[] {
+		return Array.from(
+			this.catBarEl.querySelectorAll('.gl-picker-cat'),
+			(el) => el as HTMLButtonElement,
+		);
+	}
 }
 
 function resolveRecent(
@@ -795,6 +823,15 @@ function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {
 
 function categoriesOf(items: MediaFile[]): string[] {
 	return [...new Set(items.map((item) => item.category))];
+}
+
+function orderSections(sections: Section[]): Section[] {
+	return sections.sort((a, b) => {
+		const aGeneral = a.label === 'General' ? 0 : 1;
+		const bGeneral = b.label === 'General' ? 0 : 1;
+		if (aGeneral !== bGeneral) return aGeneral - bGeneral;
+		return a.label.localeCompare(b.label);
+	});
 }
 
 function resourcePath(app: App, file?: TFile): string {
