@@ -48,11 +48,12 @@ A shortcode is just `:filename:` — for example `:party-parrot:` inserts `disco
 - **Deleting** — hover the rendered image in the editor and click the **×** badge to remove it.
 - **Searching** — search matches file names, so renaming a file renames the shortcode.
 
-## Sets
+## Sets & categories
 
-A *set* is a subfolder inside your emoji or sticker folder; images in the folder root form the general set.
+A *set* is a subfolder inside your emoji or sticker folder; images in the folder root form the general set. A *category* is an optional second subfolder inside a set, shown as a horizontal bar in the picker.
 
 - Images in `discordemojipicker/emojis/animals/` belong to the **animals** set; images in `discordemojipicker/emojis/` belong to the general set.
+- Images in `discordemojipicker/emojis/twemoji/faces/` belong to the **twemoji** set's **faces** category. In the picker, select the set in the vertical bar, then filter with the horizontal category bar.
 
 The default folders are `discordemojipicker/emojis` and `discordemojipicker/stickers`, so all your media lives in one easy-to-find place. You can change them to any folder in the settings.
 - **On first run**, the plugin seeds a small sample set — the **Cats** emoji set and the **Pets** sticker set — so you can try everything immediately. Delete them whenever you like.
@@ -96,16 +97,19 @@ Insert any image already embedded in the current note (`![[...]]` links or `<img
 Download whole emoji sets from open-license packs and save them into the destination folder:
 
 1. Pick a **pack** (Twemoji, Noto Emoji, or OpenMoji).
-2. Press **Add popular set** to queue the 211 most common emojis, or type names yourself (one per line, e.g. `smile`, `joy`, `:heart:` — Discord-style names like `sweat_smile` work too).
-3. Press **Import** to download them all at once.
+2. Choose how to organize the categories:
+   - **Per pack** — each pack becomes its own set, with category subfolders inside (e.g. `discordemojipicker/emojis/twemoji/faces/`).
+   - **Combined** — every pack (and the system emoji set) merges into one set with shared categories, named whatever you like (default **packs**).
+3. Press **Add popular set** to queue the 211 most common emojis, or type names yourself (one per line, e.g. `smile`, `joy`, `:heart:` — Discord-style names like `sweat_smile` work too).
+4. Press **Import** to download them all at once.
 
-The popular set is split into sub-category sets (faces, gestures, hearts, nature, party, objects, travel, food, animals) — each becomes its own set in the picker, e.g. **twemoji-faces** or **noto-animals** in `discordemojipicker/emojis/`. Custom names typed in the box import into a single `<pack>-custom` set. The same categories apply to the system emoji set (`system-faces`, `system-food`, ...).
+Categories are faces, gestures, hearts, symbols, nature, party, objects, travel, food, and animals. In the picker, pick a set in the vertical bar, then filter with the horizontal category bar. Custom names typed in the box import into a `custom` category of the set.
 
 Each pack is fetched from the jsDelivr CDN and licensed for free reuse (Twemoji CC-BY 4.0, Noto Emoji Apache 2.0 / OFL, OpenMoji CC BY-SA 4.0).
 
-**No internet?** Press **Add system emoji set (offline)** — it renders ~240 emojis locally from the emoji font on your device (e.g. Segoe UI Emoji on Windows) and queues them as images, no download needed.
+**No internet?** Press **Add system emoji set (offline)** — it renders ~240 emojis locally from the emoji font on your device (e.g. Segoe UI Emoji on Windows) and queues them as images, no download needed. It respects the same **Category folders** setting.
 
-Want more variety? Sites like [emoji.gg](https://emoji.gg/) host thousands of emoji packs you can download and drag into your emoji or sticker folders. Dragging in a whole folder of images auto-fills the **Set (subfolder)** box with the folder's name — change it before importing if you'd rather group them differently.
+Want more variety? Sites like [emoji.gg](https://emoji.gg/) host thousands of emoji packs you can download and drag into your emoji or sticker folders. Dragging in a whole folder of images auto-fills the **Set (subfolder)** box with the folder's name — change it before importing if you'd rather group them differently. An optional **Category (sub-subfolder)** box lets you place dragged or pasted images into a category of the chosen set.
 
 ## Cloning from Discord servers
 

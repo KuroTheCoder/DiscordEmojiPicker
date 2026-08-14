@@ -64,6 +64,7 @@ interface QueuedItem {
 	data?: ArrayBuffer;
 	mime?: string;
 	setName?: string;
+	category?: string;
 	status?: 'pending' | 'ok' | 'fail';
 }
 
@@ -83,6 +84,9 @@ export class ImportModal extends Modal {
 	private plugin: DiscordEmojiPickerPlugin;
 	private kind: MediaKind = 'emoji';
 	private setName = '';
+	private setCategory = '';
+	private packOrg: 'per-pack' | 'combined' = 'per-pack';
+	private combinedSetName = 'packs';
 	private mode: ImportMode = 'url';
 	private bodyEl!: HTMLElement;
 	private dropZoneEl!: HTMLElement;
@@ -200,6 +204,18 @@ export class ImportModal extends Modal {
 				}
 			}),
 		);
+
+		const categorySetting = new Setting(contentEl)
+			.setName('Category (sub-subfolder)')
+			.setDesc(
+				'Optional second level inside the set — shown as a horizontal category bar in the picker.',
+			);
+		categorySetting.addText((text) => {
+			text.setPlaceholder('E.g. Faces, animals, ...');
+			text.onChange((value) => {
+				this.setCategory = value.trim();
+			});
+		});
 
 		this.dropZoneEl = contentEl.createDiv({
 			cls: 'gl-import-dropzone',
@@ -410,7 +426,7 @@ export class ImportModal extends Modal {
 				});
 				box.createDiv({
 					cls: 'gl-import-hint',
-					text: 'Download whole emoji sets from open-license packs and save them into the folder above. The popular set is split into sub-category sets like “twemoji-faces” and “twemoji-animals”.',
+					text: 'Download whole emoji sets from open-license packs and save them into the folder above. The popular set is split into sub-category folders like twemoji/faces — or combine packs into one set with shared categories.',
 				});
 				new Setting(box)
 					.setName('Pack')
@@ -427,6 +443,37 @@ export class ImportModal extends Modal {
 					cls: 'gl-import-hint',
 					text: provider.hint,
 				});
+				new Setting(box)
+					.setName('Category folders')
+					.setDesc(
+						'Per pack keeps each pack in its own set with categories inside. Combined merges all packs into one set with shared categories.',
+					)
+					.addDropdown((dropdown) => {
+						dropdown
+							.addOption('per-pack', 'Per pack')
+							.addOption('combined', 'Combined');
+						dropdown.setValue(this.packOrg);
+						dropdown.onChange((value) => {
+							this.packOrg = value as 'per-pack' | 'combined';
+							combinedSetting.settingEl.toggleClass(
+								'gl-import-hidden',
+								this.packOrg !== 'combined',
+							);
+						});
+					});
+				const combinedSetting = new Setting(box)
+					.setName('Combined set name')
+					.addText((text) => {
+						text.setValue(this.combinedSetName);
+						text.onChange((value) => {
+							this.combinedSetName =
+								value.trim() || 'packs';
+						});
+					});
+				combinedSetting.settingEl.toggleClass(
+					'gl-import-hidden',
+					this.packOrg !== 'combined',
+				);
 				const textarea = box.createEl('textarea', {
 					cls: 'gl-import-textarea',
 					attr: {
@@ -540,8 +587,13 @@ export class ImportModal extends Modal {
 		this.setStatus(`Queued ${sources.length} image(s) from the note.`);
 	}
 
+		private packSetName(providerId: string): string {
+		return this.packOrg === 'combined' ? this.combinedSetName : providerId;
+	}
+
 	private async addSystemEmojis() {
 		this.setStatus('Rendering system emoji set...');
+		const baseSet = this.packSetName('system');
 		let added = 0;
 		const failed: string[] = [];
 		for (const group of SYSTEM_EMOJI_GROUPS) {
@@ -553,7 +605,8 @@ export class ImportModal extends Modal {
 						kind: this.kind,
 						data,
 						mime: 'image/png',
-						setName: `system-${group.category}`,
+						setName: baseSet,
+						category: group.category,
 					});
 					added++;
 				} catch {
@@ -571,6 +624,7 @@ export class ImportModal extends Modal {
 
 	private async addPopularSet(provider: PackProvider) {
 		this.setStatus('Resolving emoji names...');
+		const baseSet = this.packSetName(provider.id);
 		let added = 0;
 		let failed = 0;
 		for (const category of POPULAR_CATEGORIES) {
@@ -582,7 +636,8 @@ export class ImportModal extends Modal {
 						name: clean || code,
 						kind: 'emoji',
 						url,
-						setName: `${provider.id}-${category.name}`,
+						setName: baseSet,
+						category: category.name,
 					});
 					added++;
 				} else {
@@ -616,7 +671,8 @@ export class ImportModal extends Modal {
 					name: clean || code,
 					kind: 'emoji',
 					url,
-					setName: `${provider.id}-custom`,
+					setName: this.packSetName(provider.id),
+					category: 'custom',
 				});
 				added++;
 			} else {
@@ -889,7 +945,13 @@ export class ImportModal extends Modal {
 		let success = 0;
 		let failed = 0;
 		for (const item of pending) {
-			const ok = await importQueuedItem(this.app, this.plugin, item, this.setName);
+			const ok = await importQueuedItem(
+					this.app,
+					this.plugin,
+					item,
+					this.setName,
+					this.setCategory,
+				);
 			item.status = ok ? 'ok' : 'fail';
 			if (ok) success++;
 			else failed++;
@@ -919,6 +981,7 @@ async function importQueuedItem(
 	plugin: DiscordEmojiPickerPlugin,
 	item: QueuedItem,
 	modalSetName: string,
+	modalCategory: string,
 ): Promise<boolean> {
 	const folder =
 		item.kind === 'emoji'
@@ -926,7 +989,11 @@ async function importQueuedItem(
 			: plugin.settings.stickerFolder;
 	if (!folder.trim()) return false;
 	const setName = item.setName ?? modalSetName;
-	const target = { folder, setName };
+	const target = {
+		folder,
+		setName,
+		category: item.category ?? modalCategory,
+	};
 	if (item.data) {
 		return saveImage(app, item.data, item.mime ?? '', target, item.name);
 	}
@@ -1030,7 +1097,11 @@ async function collectNoteImages(app: App): Promise<NoteImage[]> {
 	return sources;
 }
 
-function targetDir(target: { folder: string; setName: string }): string {
+function targetDir(target: {
+	folder: string;
+	setName: string;
+	category?: string;
+}): string {
 	const root = target.folder
 		.trim()
 		.replace(/\\/g, '/')
@@ -1039,7 +1110,13 @@ function targetDir(target: { folder: string; setName: string }): string {
 		.trim()
 		.replace(/\\/g, '/')
 		.replace(/^\/+|\/+$/g, '');
-	return set ? `${root}/${set}` : root;
+	const category = (target.category ?? '')
+		.trim()
+		.replace(/\\/g, '/')
+		.replace(/^\/+|\/+$/g, '');
+	if (set && category) return `${root}/${set}/${category}`;
+	if (set) return `${root}/${set}`;
+	return root;
 }
 
 async function ensureFolder(app: App, dir: string): Promise<boolean> {

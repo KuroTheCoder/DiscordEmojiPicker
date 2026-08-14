@@ -10,6 +10,7 @@ import {
 import { fontSizePx, sizeInEm } from '../utils/helpers';
 
 const RECENT_KEY = 'recent';
+const ALL_KEY = 'All';
 const MAX_RECENT = 40;
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 520;
@@ -32,6 +33,7 @@ interface Section {
 	label: string;
 	type: 'emoji' | 'sticker' | 'recent';
 	items: MediaFile[];
+	categories: string[];
 	icon: string;
 }
 
@@ -44,6 +46,7 @@ export class EmojiPicker {
 	private tabEmojiBtn!: HTMLButtonElement;
 	private tabStickerBtn!: HTMLButtonElement;
 	private navEl!: HTMLElement;
+	private catBarEl!: HTMLElement;
 	private scrollEl!: HTMLElement;
 	private tooltipEl!: HTMLElement;
 	private tooltipRaf = 0;
@@ -54,6 +57,7 @@ export class EmojiPicker {
 	private sectionEls = new Map<string, HTMLElement>();
 	private gridEls = new Map<string, HTMLElement>();
 	private activeKey = RECENT_KEY;
+	private selectedCategory = ALL_KEY;
 	private mode: Mode = 'emoji';
 	private query = '';
 	private initialQuery = '';
@@ -208,6 +212,7 @@ export class EmojiPicker {
 				label: setName,
 				type: 'emoji',
 				items,
+				categories: categoriesOf(items),
 				icon: randomThumb(this.app, items),
 			});
 		}
@@ -218,6 +223,7 @@ export class EmojiPicker {
 				label: setName,
 				type: 'sticker',
 				items,
+				categories: categoriesOf(items),
 				icon: randomThumb(this.app, items),
 			});
 		}
@@ -243,11 +249,12 @@ export class EmojiPicker {
 		if (this.mode === mode) return;
 		this.mode = mode;
 		this.activeKey = RECENT_KEY;
+		this.selectedCategory = ALL_KEY;
 		this.searchInput.value = '';
 		this.query = '';
 		this.tabEmojiBtn.toggleClass('active', mode === 'emoji');
 		this.tabStickerBtn.toggleClass('active', mode === 'sticker');
-		this.render();
+		this.animateBrowse(() => this.render());
 	}
 
 	private buildSearch(container: HTMLElement) {
@@ -288,10 +295,12 @@ export class EmojiPicker {
 			const target = (ev.target as HTMLElement).closest('button');
 			if (!target) return;
 			const key = target.getAttribute('data-key');
-			if (key) this.scrollToSection(key);
+			if (key) this.selectSection(key);
 		});
 
-		this.scrollEl = body.createDiv({ cls: 'gl-picker-scroll' });
+		const column = body.createDiv({ cls: 'gl-picker-column' });
+		this.catBarEl = column.createDiv({ cls: 'gl-picker-cats' });
+		this.scrollEl = column.createDiv({ cls: 'gl-picker-scroll' });
 		this.scrollEl.addEventListener('scroll', () => this.onScroll(), { passive: true });
 
 		const footer = container.createDiv({ cls: 'gl-picker-footer' });
@@ -325,6 +334,7 @@ export class EmojiPicker {
 				label: 'Recently used',
 				type: 'recent',
 				items: recent,
+				categories: [],
 				icon: '',
 			});
 		}
@@ -334,7 +344,13 @@ export class EmojiPicker {
 
 	private render() {
 		this.renderNav();
-		this.renderSections();
+		if (this.query.trim()) {
+			this.selectedCategory = ALL_KEY;
+			this.renderCategories();
+			this.renderStacked();
+		} else {
+			this.renderBrowse();
+		}
 		this.updateNavHighlight();
 		this.updateFooter();
 	}
@@ -410,15 +426,12 @@ export class EmojiPicker {
 				cls: 'gl-picker-section-title',
 				text: section.label,
 			});
-			const grid = sectionEl.createDiv({
-				cls:
-					section.type === 'sticker'
-						? 'gl-picker-grid gl-picker-grid-stickers'
-						: 'gl-picker-grid',
-			});
+			const grid = this.makeGrid(sectionEl, section);
 			this.gridEls.set(section.key, grid);
 			for (const item of items) {
-				grid.appendChild(this.makeItemButton(item, section.type));
+				grid.appendChild(
+					this.makeItemButton(item, section.type, grid.children.length),
+				);
 			}
 		}
 
@@ -432,11 +445,128 @@ export class EmojiPicker {
 		}
 	}
 
-	private makeItemButton(item: MediaFile, type: Section['type']): HTMLButtonElement {
+	private renderStacked() {
+		this.renderSections();
+	}
+
+	private renderBrowse() {
+		this.scrollEl.empty();
+		this.sectionEls.clear();
+		this.gridEls.clear();
+
+		const sections = this.sectionsForRender();
+		let section =
+			sections.find((candidate) => candidate.key === this.activeKey) ??
+			sections[0];
+		if (!section) {
+			this.renderCategories();
+			this.scrollEl.createDiv({
+				cls: 'gl-picker-empty',
+				text: 'No images yet. Put images in the folder set in Settings.',
+			});
+			return;
+		}
+		this.activeKey = section.key;
+		this.renderCategories(section);
+
+		const sectionEl = this.scrollEl.createDiv({
+			cls: 'gl-picker-section',
+			attr: { 'data-key': section.key },
+		});
+		this.sectionEls.set(section.key, sectionEl);
+		sectionEl.createEl('h3', {
+			cls: 'gl-picker-section-title',
+			text: section.label,
+		});
+		const grid = this.makeGrid(sectionEl, section);
+		this.gridEls.set(section.key, grid);
+		const items =
+			this.selectedCategory === ALL_KEY
+				? section.items
+				: section.items.filter(
+						(item) => item.category === this.selectedCategory,
+					);
+		for (const item of items) {
+			grid.appendChild(
+				this.makeItemButton(item, section.type, grid.children.length),
+			);
+		}
+		if (items.length === 0) {
+			grid.createDiv({
+				cls: 'gl-picker-empty',
+				text: 'No images in this category.',
+			});
+		}
+	}
+
+	private makeGrid(sectionEl: HTMLElement, section: Section): HTMLElement {
+		return sectionEl.createDiv({
+			cls:
+				section.type === 'sticker'
+					? 'gl-picker-grid gl-picker-grid-stickers'
+					: 'gl-picker-grid',
+		});
+	}
+
+	private renderCategories(section?: Section) {
+		this.catBarEl.empty();
+		const cats = section?.categories.filter(
+			(category) => category !== 'General',
+		);
+		if (!section || !cats || cats.length === 0) {
+			this.catBarEl.toggleClass('is-visible', false);
+			return;
+		}
+		const options = [
+			ALL_KEY,
+			...section.categories.filter((c) => c === 'General'),
+			...cats.sort((a, b) => a.localeCompare(b)),
+		];
+		for (const option of options) {
+			const pill = this.catBarEl.createEl('button', {
+				cls: 'gl-picker-cat',
+				attr: { type: 'button', 'data-cat': option },
+				text: option,
+			});
+			pill.toggleClass('active', option === this.selectedCategory);
+			pill.addEventListener('click', () => this.setCategory(option));
+		}
+		this.catBarEl.toggleClass('is-visible', true);
+	}
+
+	private setCategory(category: string) {
+		if (this.selectedCategory === category) return;
+		this.selectedCategory = category;
+		this.animateBrowse(() => {
+			this.renderBrowse();
+			this.updateNavHighlight();
+			this.updateFooter();
+		});
+	}
+
+	private animateBrowse(done: () => void) {
+		this.scrollEl.toggleClass('gl-picker-fading', true);
+		window.setTimeout(() => {
+			this.scrollEl.toggleClass('gl-picker-fading', false);
+			done();
+			this.scrollEl.toggleClass('gl-picker-animate', true);
+			window.setTimeout(
+				() => this.scrollEl.toggleClass('gl-picker-animate', false),
+				600,
+			);
+		}, 120);
+	}
+
+	private makeItemButton(
+		item: MediaFile,
+		type: Section['type'],
+		index: number,
+	): HTMLButtonElement {
 		const btn = createEl('button', {
 			cls: type === 'sticker' ? 'gl-sticker' : 'gl-emoji',
 			attr: { type: 'button' },
 		});
+		btn.style.setProperty('--gl-i', String(index));
 		btn.createEl('img', {
 			attr: {
 				src: resourcePath(this.app, item.file),
@@ -493,11 +623,28 @@ export class EmojiPicker {
 		if (grid) {
 			grid.empty();
 			for (const item of this.recentItems()) {
-				grid.appendChild(this.makeItemButton(item, 'recent'));
+				grid.appendChild(
+					this.makeItemButton(item, 'recent', grid.children.length),
+				);
 			}
 		} else {
 			this.render();
 		}
+	}
+
+	private selectSection(key: string) {
+		if (this.query.trim()) {
+			this.scrollToSection(key);
+			return;
+		}
+		if (this.activeKey === key) return;
+		this.activeKey = key;
+		this.selectedCategory = ALL_KEY;
+		this.animateBrowse(() => {
+			this.renderBrowse();
+			this.updateNavHighlight();
+			this.updateFooter();
+		});
 	}
 
 	private scrollToSection(key: string) {
@@ -509,15 +656,17 @@ export class EmojiPicker {
 	}
 
 	private onScroll() {
-		let current = RECENT_KEY;
-		for (const [key, el] of this.sectionEls) {
-			if (el.offsetTop - this.scrollEl.scrollTop <= 60) {
-				current = key;
+		if (this.query.trim()) {
+			let current = RECENT_KEY;
+			for (const [key, el] of this.sectionEls) {
+				if (el.offsetTop - this.scrollEl.scrollTop <= 60) {
+					current = key;
+				}
 			}
-		}
-		if (current !== this.activeKey) {
-			this.activeKey = current;
-			this.updateNavHighlight();
+			if (current !== this.activeKey) {
+				this.activeKey = current;
+				this.updateNavHighlight();
+			}
 		}
 	}
 
@@ -625,6 +774,7 @@ function resolveRecent(
 				path: file.path,
 				label: file.basename,
 				set: 'Recently used',
+				category: 'General',
 				kind,
 			});
 		}
@@ -641,6 +791,10 @@ function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {
 		else map.set(key, [item]);
 	}
 	return map;
+}
+
+function categoriesOf(items: MediaFile[]): string[] {
+	return [...new Set(items.map((item) => item.category))];
 }
 
 function resourcePath(app: App, file?: TFile): string {

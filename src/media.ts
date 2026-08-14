@@ -19,6 +19,7 @@ export interface MediaFile {
 	path: string;
 	label: string;
 	set: string;
+	category: string;
 	kind: MediaKind;
 }
 
@@ -42,6 +43,7 @@ export function getMediaFiles(
 			path: file.path,
 			label: file.basename,
 			set: setOf(file.path, root),
+			category: categoryOf(file.path, root),
 			kind,
 		}))
 		.sort(
@@ -92,4 +94,13 @@ function setOf(path: string, root: string): string {
 	const rel = dir.slice(root.length + 1);
 	const parts = rel.split('/');
 	return parts[0] ?? 'General';
+}
+
+function categoryOf(path: string, root: string): string {
+	const dir = parentDir(path);
+	if (dir === root) return 'General';
+	const rel = dir.slice(root.length + 1);
+	const parts = rel.split('/');
+	if (parts.length < 2) return 'General';
+	return parts[1] ?? 'General';
 }

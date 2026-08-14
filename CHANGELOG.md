@@ -6,10 +6,13 @@ All notable changes to Discord Emoji Picker.
 
 ### Added
 
-- **Sub-category sets for packs**: the popular set and the system emoji set now split into category sets (faces, gestures, hearts, nature, party, objects, travel, food, animals) named like `twemoji-faces` or `system-food`, so the picker shows them as organized, browsable sets.
+- **Three-level folders & a horizontal category bar**: sets are now level-1 folders and categories are level-2 folders inside them (`discordemojipicker/emojis/twemoji/faces/`). The picker keeps the vertical bar for sets and adds a horizontal bar for categories — pick a set, then filter by category.
+- **Smooth transitions**: switching sets, categories, or emoji/sticker tabs crossfades the grid and staggers items in with a gentle rise; respects your system's reduced-motion setting.
+- **Pack organization options**: choose **Per pack** (each pack is its own set with category folders inside) or **Combined** (all packs plus the system emoji set merge into one set with shared categories, custom-named — default **packs**).
 - **Folder-name auto-suggest on drop**: dragging in a whole folder of images fills the **Set (subfolder)** field with the source folder's name — still editable before importing.
 - **System emoji set (offline)**: the Emoji pack tab can render ~240 emojis locally from your device's emoji font (Segoe UI Emoji on Windows) with no download.
-- **Per-provider set folders**: custom names typed into the pack tab import into a `<pack>-custom` set (e.g. `discordemojipicker/emojis/twemoji-custom/`), so sets stay organized without manual setup.
+- **Category (sub-subfolder) field** in the import modal for placing dropped/pasted images into a category of the chosen set.
+- **Per-provider set folders**: custom names typed into the pack tab import into the pack's set under a `custom` category (e.g. `discordemojipicker/emojis/twemoji/custom/`), so sets stay organized without manual setup.
 
 ### Changed
 
