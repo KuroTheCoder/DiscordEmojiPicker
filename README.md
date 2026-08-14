@@ -7,13 +7,7 @@ A Discord-style emoji and sticker picker for [Obsidian](https://obsidian.md). It
 
 ## Demo
 
-<!-- TODO: replace these placeholder SVGs with real screenshots (see docs/screenshots/README.md) -->
-
-![The emoji picker floating over a note](docs/screenshots/picker.svg)
-
-![The import modal with a queue of emojis and stickers](docs/screenshots/import.svg)
-
-![The settings tab](docs/screenshots/settings.svg)
+![Picking and inserting an emoji from the picker](docs/screenshots/picker-demo.gif)
 
 ## Features
 

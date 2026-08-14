@@ -9,6 +9,7 @@ This guide covers every feature of Discord Emoji Picker.
 - [Importing emojis & stickers](#importing-emojis--stickers)
 - [Cloning from Discord servers](#cloning-from-discord-servers)
 - [Theming the picker](#theming-the-picker)
+- [Settings reference](#settings-reference)
 
 ## The picker
 
@@ -55,6 +56,8 @@ A *set* is a subfolder inside your emoji or sticker folder; images in the folder
 ## Importing emojis & stickers
 
 Run **Import emojis & stickers** to open the import modal. Everything you add lands in a **queue**; press **Import** to download them all at once. Each item shows a ✓ or ✕ once it's processed.
+
+![The import modal with a queue of emojis and stickers](../docs/screenshots/import.svg)
 
 Use the **Import into** dropdown to pick the destination folder (emoji or sticker) and the **Set** dropdown to pick a subfolder — or type a new set name and press **Create**.
 
@@ -120,3 +123,19 @@ Every color and size is a CSS variable, so you can restyle anything with a snipp
 ```
 
 The variables live on `.gl-picker` — see `styles.css` for the full list.
+
+## Settings reference
+
+![The settings tab](../docs/screenshots/settings.svg)
+
+| Setting | What it does |
+| --- | --- |
+| Emoji folder | Vault folder with emoji images; each subfolder becomes a set |
+| Sticker folder | Vault folder with sticker images; each subfolder becomes a set |
+| Emoji sets / Sticker sets | Create, delete, or open set folders |
+| Insert style | Shortcode, embed, or HTML when clicking in the picker |
+| Render shortcodes in editor | Show shortcode images in live preview / source mode |
+| Emoji size / Sticker size | Grid size in the picker and inserted size |
+| Picker theme | Default, Compact, Vibrant, or Minimal |
+| Clear recently used | Empties the recently used row in the picker |
+| Discord token / Token type / Test connection | Credentials for cloning from Discord servers |
