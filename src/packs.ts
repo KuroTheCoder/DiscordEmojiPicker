@@ -44,6 +44,56 @@ export function packProviderById(id: string): PackProvider {
 
 let emojiAliasMap: Map<string, string> | null = null;
 
+const ALIAS_FALLBACK: Record<string, string> = {
+	sweat_smile: '😅',
+	heart_eyes: '😍',
+	kissing_heart: '😘',
+	kissing_smiling_eyes: '😙',
+	stuck_out_tongue_winking_eye: '😜',
+	stuck_out_tongue_closed_eyes: '😝',
+	unamused: '😒',
+	rolling_eyes: '🙄',
+	expressionless: '😑',
+	party_face: '🥳',
+	cold_sweat: '😰',
+	anguished: '😧',
+	sob: '😭',
+	weary: '😩',
+	fearful: '😨',
+	open_mouth: '😮',
+	astonished: '😲',
+	relieved: '😌',
+	rage: '😡',
+	pensive: '😔',
+	no_mouth: '😶',
+	grimacing: '😬',
+	smiling_imp: '😈',
+	imp: '👿',
+	clap: '👏',
+	muscle: '💪',
+	point_up: '☝️',
+	point_down: '👇',
+	point_left: '👈',
+	point_right: '👉',
+	raised_hands: '🙌',
+	metal: '🤘',
+	fingers_crossed: '🤞',
+	star2: '🌟',
+	sweat_drops: '💦',
+	clapper: '🎬',
+	headphones: '🎧',
+	medal: '🏅',
+	fries: '🍟',
+	hotdog: '🌭',
+	icecream: '🍦',
+	beer: '🍺',
+	milk_glass: '🥛',
+	cherry: '🍒',
+	panda_face: '🐼',
+	bee: '🐝',
+	whale2: '🐳',
+};
+
 export async function packUrlForCode(
 	code: string,
 	provider: PackProvider,
@@ -54,19 +104,22 @@ export async function packUrlForCode(
 }
 
 async function emojiCharFor(code: string): Promise<string | undefined> {
-	if (!emojiAliasMap) {
-		const res = await requestUrl({ url: EMOJILIB_URL });
-		const json = res.json as Record<string, string[]>;
-		emojiAliasMap = new Map();
-		for (const [char, aliases] of Object.entries(json)) {
-			for (const alias of aliases) {
-				const key = normalizeCode(alias);
-				if (key && !emojiAliasMap.has(key)) emojiAliasMap.set(key, char);
+	const clean = normalizeCode(code);
+	if (clean) {
+		if (!emojiAliasMap) {
+			const res = await requestUrl({ url: EMOJILIB_URL });
+			const json = res.json as Record<string, string[]>;
+			emojiAliasMap = new Map();
+			for (const [char, aliases] of Object.entries(json)) {
+				for (const alias of aliases) {
+					const key = normalizeCode(alias);
+					if (key && !emojiAliasMap.has(key)) emojiAliasMap.set(key, char);
+				}
 			}
 		}
+		if (emojiAliasMap.has(clean)) return emojiAliasMap.get(clean);
+		if (ALIAS_FALLBACK[clean]) return ALIAS_FALLBACK[clean];
 	}
-	const clean = normalizeCode(code);
-	if (clean && emojiAliasMap.has(clean)) return emojiAliasMap.get(clean);
 	const stripped = code.replace(/^:+|:+$/g, '');
 	const chars = Array.from(stripped);
 	if (chars.length > 0 && chars.every((c) => (c.codePointAt(0) ?? 0) > 0x7f)) {
@@ -82,6 +135,7 @@ export function normalizeCode(code: string): string {
 function codepoints(char: string, separator: string): string {
 	return Array.from(char)
 		.map((c) => c.codePointAt(0)!.toString(16))
+		.filter((cp) => cp !== 'fe0f')
 		.join(separator);
 }
 

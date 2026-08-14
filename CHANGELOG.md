@@ -2,6 +2,19 @@
 
 All notable changes to Discord Emoji Picker.
 
+## Unreleased
+
+### Added
+
+- **System emoji set (offline)**: the Emoji pack tab can render ~250 emojis locally from your device's emoji font (Segoe UI Emoji on Windows) with no download.
+
+### Fixed
+
+- Import modal crashed before rendering the queue, status, and Import button (the status element was created after the body was rendered).
+- Emoji pack name resolution: Discord-style names like `sweat_smile` or `heart_eyes` now resolve (fallback alias map), so the popular set imports fully instead of failing.
+- Pack downloads strip variation selectors (`fe0f`) from codepoints, fixing 404s for emojis like ☀️, ❄️, and ✌️ on some packs.
+- Downloads are throttled slightly to avoid CDN rate-limit failures on large sets.
+
 ## 1.1.0 - 2026-08-14
 
 ### Added

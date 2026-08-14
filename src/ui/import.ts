@@ -35,6 +35,7 @@ import {
 	POPULAR_SET,
 	normalizeCode,
 } from '../packs';
+import { renderSystemEmojiPng, SYSTEM_EMOJI } from '../system-emoji';
 
 type ImportMode = 'url' | 'discord' | 'clipboard' | 'note' | 'pack';
 
@@ -448,6 +449,17 @@ export class ImportModal extends Modal {
 				}).addEventListener('click', () => {
 					void this.addPackCodes(textarea.value, provider);
 				});
+				box.createDiv({
+					cls: 'gl-import-hint',
+					text: 'No internet? Add the system emoji set — it is rendered locally from the emoji font on your device, with no download.',
+				});
+				box.createEl('button', {
+					cls: 'gl-import-action',
+					text: 'Add system emoji set (offline)',
+					attr: { type: 'button' },
+				}).addEventListener('click', () => {
+					void this.addSystemEmojis();
+				});
 				break;
 			}
 		}
@@ -519,6 +531,30 @@ export class ImportModal extends Modal {
 			});
 		}
 		this.setStatus(`Queued ${sources.length} image(s) from the note.`);
+	}
+
+	private async addSystemEmojis() {
+		this.setStatus('Rendering system emoji set...');
+		let added = 0;
+		let failed = 0;
+		for (const emoji of SYSTEM_EMOJI) {
+			try {
+				const data = await renderSystemEmojiPng(emoji.char);
+				this.queueItem({
+					name: emoji.name,
+					kind: this.kind,
+					data,
+					mime: 'image/png',
+				});
+				added++;
+			} catch {
+				failed++;
+			}
+		}
+		this.setStatus(
+			`Queued ${added} system emoji(s)` +
+				(failed ? `, ${failed} could not be rendered.` : '.'),
+		);
 	}
 
 	private async addPackCodes(text: string, provider: PackProvider) {
@@ -797,6 +833,7 @@ export class ImportModal extends Modal {
 			if (ok) success++;
 			else failed++;
 			this.updateItemStatus(item.id);
+			await delay(60);
 		}
 		this.importing = false;
 		this.setStatus(`Done: ${success} imported, ${failed} failed.`);
@@ -810,6 +847,10 @@ export class ImportModal extends Modal {
 		if (!this.statusEl) return;
 		this.statusEl.setText(text);
 	}
+}
+
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 async function importQueuedItem(

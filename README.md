@@ -39,7 +39,7 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 1. On first run, the plugin seeds sample sets (Cats emojis, Pets stickers) into `.gl-emoji/` and `.gl-stickers/` so you can try it out immediately. Delete them whenever you like.
 2. Open a note, click the smile ribbon icon (or run **Open emoji & sticker picker**) and click an image to insert it.
 3. Type `:name:` anywhere to insert by shortcode — autocomplete will kick in.
-4. Run **Import emojis & stickers** to pull images from the web, Discord, popular emoji packs (Twemoji, Noto Emoji, OpenMoji), or local files.
+4. Run **Import emojis & stickers** to pull images from the web, Discord, popular emoji packs (Twemoji, Noto Emoji, OpenMoji), or local files — or add the fully offline **system emoji set** rendered from your device's emoji font.
 
 ## Settings
 

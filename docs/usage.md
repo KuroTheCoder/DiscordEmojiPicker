@@ -96,10 +96,12 @@ Insert any image already embedded in the current note (`![[...]]` links or `<img
 Download whole emoji sets from open-license packs and save them into the destination folder:
 
 1. Pick a **pack** (Twemoji, Noto Emoji, or OpenMoji).
-2. Press **Add popular set** to queue ~250 of the most common emojis, or type names yourself (one per line, e.g. `smile`, `joy`, `:heart:`).
+2. Press **Add popular set** to queue ~250 of the most common emojis, or type names yourself (one per line, e.g. `smile`, `joy`, `:heart:` — Discord-style names like `sweat_smile` work too).
 3. Press **Import** to download them all at once.
 
 Each pack is fetched from the jsDelivr CDN and licensed for free reuse (Twemoji CC-BY 4.0, Noto Emoji Apache 2.0 / OFL, OpenMoji CC BY-SA 4.0).
+
+**No internet?** Press **Add system emoji set (offline)** — it renders ~250 emojis locally from the emoji font on your device (e.g. Segoe UI Emoji on Windows) and queues them as images, no download needed.
 
 Want more variety? Sites like [emoji.gg](https://emoji.gg/) host thousands of emoji packs you can download and drag into your emoji or sticker folders.
 
