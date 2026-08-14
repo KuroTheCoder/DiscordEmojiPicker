@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="560" viewBox="0 0 760 560">
+  <rect width="100%" height="100%" fill="#ececec"/>
+  <rect x="14" y="14" width="732" height="532" rx="16" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+  <text x="40" y="64" fill="#555555" font-family="sans-serif" font-size="22" font-weight="600">Settings — Discord Emoji Picker</text>
+  <g>
+    <rect x="40" y="92" width="680" height="52" rx="10" fill="#f2f2f2"/>
+    <rect x="56" y="104" width="180" height="12" rx="6" fill="#d6d6d6"/>
+    <rect x="56" y="122" width="260" height="10" rx="5" fill="#dddddd"/>
+    <rect x="600" y="106" width="120" height="24" rx="8" fill="#d9d9d9"/>
+
+    <rect x="40" y="156" width="680" height="52" rx="10" fill="#f2f2f2"/>
+    <rect x="56" y="168" width="180" height="12" rx="6" fill="#d6d6d6"/>
+    <rect x="56" y="186" width="260" height="10" rx="5" fill="#dddddd"/>
+    <rect x="600" y="170" width="120" height="24" rx="8" fill="#d9d9d9"/>
+
+    <rect x="40" y="220" width="680" height="52" rx="10" fill="#f2f2f2"/>
+    <rect x="56" y="232" width="150" height="12" rx="6" fill="#d6d6d6"/>
+    <rect x="56" y="250" width="240" height="10" rx="5" fill="#dddddd"/>
+    <rect x="600" y="234" width="120" height="24" rx="8" fill="#d9d9d9"/>
+
+    <rect x="40" y="284" width="680" height="52" rx="10" fill="#f2f2f2"/>
+    <rect x="56" y="296" width="190" height="12" rx="6" fill="#d6d6d6"/>
+    <rect x="56" y="314" width="200" height="10" rx="5" fill="#dddddd"/>
+    <rect x="600" y="298" width="120" height="24" rx="8" fill="#d9d9d9"/>
+
+    <rect x="40" y="348" width="680" height="52" rx="10" fill="#f2f2f2"/>
+    <rect x="56" y="360" width="160" height="12" rx="6" fill="#d6d6d6"/>
+    <rect x="56" y="378" width="220" height="10" rx="5" fill="#dddddd"/>
+    <rect x="600" y="362" width="120" height="24" rx="8" fill="#d9d9d9"/>
+  </g>
+  <text x="380" y="452" fill="#9a9a9a" font-family="sans-serif" font-size="20" text-anchor="middle" font-weight="600">Settings tab</text>
+  <text x="380" y="478" fill="#b3b3b3" font-family="sans-serif" font-size="14" text-anchor="middle">Screenshot coming soon</text>
+  <rect x="40" y="500" width="680" height="30" rx="8" fill="#e0e0e0"/>
+</svg>

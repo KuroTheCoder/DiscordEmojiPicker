@@ -5,10 +5,20 @@
 
 A Discord-style emoji and sticker picker for [Obsidian](https://obsidian.md). It reads images from folders in your vault and lets you insert them into notes — fully offline by default.
 
+## Demo
+
+<!-- TODO: replace these placeholder SVGs with real screenshots (see docs/screenshots/README.md) -->
+
+![The emoji picker floating over a note](docs/screenshots/picker.svg)
+
+![The import modal with a queue of emojis and stickers](docs/screenshots/import.svg)
+
+![The settings tab](docs/screenshots/settings.svg)
+
 ## Features
 
 - **Emoji & sticker pills** with set navigation, live search, and a "recently used" row.
-- **Multiple insert styles**: shortcode (`:name:`), native embed (`[[image|size]]`), or raw HTML. Shortcodes render as images in the editor and reading mode.
+- **Three insert styles**: shortcode (`:name:`), native embed (`[[image|size]]`), or raw HTML. Shortcodes render as images in the editor and reading mode.
 - **Import modal** with a queue: drag & drop or paste links from Discord, local files, clipboard, note embeds, and emoji packs.
 - **Clone from Discord servers** using a token — grab emojis and stickers from servers you're in.
 - **Set management**: create, delete, and open set folders from the picker, the import modal, and the settings tab.
@@ -30,19 +40,31 @@ Copy `main.js`, `manifest.json`, and `styles.css` to:
 
 Then reload Obsidian and enable the plugin in **Settings → Community plugins**.
 
-## Usage
+## Quick start
 
-- Click the smile ribbon icon or run **Open emoji & sticker picker** to open the picker at the cursor.
-- Run **Import emojis & stickers** to open the import modal.
+1. Put some images in your vault — e.g. `emoji/` and `stickers/` (create them via **Settings → Discord Emoji Picker**; each subfolder becomes a *set*).
+2. Open a note, click the smile ribbon icon (or run **Open emoji & sticker picker**) and click an image to insert it.
+3. Type `:name:` anywhere to insert by shortcode — autocomplete will kick in.
+4. Run **Import emojis & stickers** to pull images from the web, Discord, or local files.
 
 ## Settings
 
-- **Emoji / sticker folder** — where images live; each subfolder becomes a set.
-- **Insert style** — shortcode, embed, or HTML.
-- **Render shortcodes in editor** — show images while editing.
-- **Emoji / sticker size** — grid size in the picker and inserted size.
-- **Picker theme** — visual style of the picker panel.
-- **Discord** — token and token type for server cloning, plus a connection test.
+| Setting | What it does |
+| --- | --- |
+| Emoji folder | Vault folder with emoji images; each subfolder becomes a set |
+| Sticker folder | Vault folder with sticker images; each subfolder becomes a set |
+| Emoji sets / Sticker sets | Create, delete, or open set folders |
+| Insert style | Shortcode, embed, or HTML when clicking in the picker |
+| Render shortcodes in editor | Show shortcode images in live preview / source mode |
+| Emoji size / Sticker size | Grid size in the picker and inserted size |
+| Picker theme | Default, Compact, Vibrant, or Minimal |
+| Clear recently used | Empties the recently used row in the picker |
+| Discord token / Token type / Test connection | Credentials for cloning from Discord servers |
+
+## Documentation
+
+- [Usage guide](docs/usage.md) — every feature, step by step.
+- [Troubleshooting & FAQ](docs/troubleshooting.md) — common problems and fixes.
 
 ## Security & privacy
 
@@ -58,6 +80,10 @@ npm run dev     # watch mode
 npm run build   # production build -> main.js
 npm run lint    # eslint
 ```
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

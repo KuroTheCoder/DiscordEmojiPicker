@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="480" viewBox="0 0 620 480">
+  <rect width="100%" height="100%" fill="#ececec"/>
+  <rect x="14" y="14" width="592" height="452" rx="16" fill="#ffffff" stroke="#cccccc" stroke-width="2"/>
+  <rect x="14" y="14" width="592" height="48" rx="16" fill="#e0e0e0"/>
+  <g>
+    <rect x="36" y="32" width="84" height="12" rx="6" fill="#d6d6d6"/>
+    <rect x="132" y="32" width="70" height="12" rx="6" fill="#d6d6d6"/>
+    <rect x="214" y="32" width="96" height="12" rx="6" fill="#d6d6d6"/>
+  </g>
+  <rect x="36" y="84" width="548" height="120" rx="12" fill="#f2f2f2" stroke="#cccccc" stroke-dasharray="6 4"/>
+  <text x="310" y="136" fill="#b3b3b3" font-family="sans-serif" font-size="16" text-anchor="middle">Drop emoji or sticker files here</text>
+  <text x="310" y="160" fill="#c9c9c9" font-family="sans-serif" font-size="12" text-anchor="middle">...or paste links, clipboard images, or clone a Discord server</text>
+  <g>
+    <rect x="36" y="228" width="64" height="64" rx="10" fill="#d9d9d9"/>
+    <rect x="108" y="228" width="64" height="64" rx="10" fill="#d9d9d9"/>
+    <rect x="180" y="228" width="64" height="64" rx="10" fill="#d9d9d9"/>
+    <rect x="252" y="228" width="64" height="64" rx="10" fill="#d9d9d9"/>
+    <rect x="324" y="228" width="64" height="64" rx="10" fill="#d9d9d9"/>
+  </g>
+  <rect x="36" y="316" width="548" height="64" rx="12" fill="#f2f2f2"/>
+  <text x="210" y="354" fill="#9a9a9a" font-family="sans-serif" font-size="20" text-anchor="middle" font-weight="600">Import modal</text>
+  <text x="210" y="378" fill="#b3b3b3" font-family="sans-serif" font-size="14" text-anchor="middle">Screenshot coming soon</text>
+  <rect x="436" y="316" width="148" height="64" rx="12" fill="#e0e0e0"/>
+  <rect x="36" y="404" width="548" height="44" rx="10" fill="#e0e0e0"/>
+</svg>
