@@ -1,4 +1,4 @@
-import { App, Editor, setIcon, TFile } from 'obsidian';
+import { App, Editor, Notice, setIcon, TFile } from 'obsidian';
 import type DiscordEmojiPickerPlugin from '../main';
 import {
 	getMediaFiles,
@@ -8,12 +8,15 @@ import {
 	SUPPORTED_EXTENSIONS,
 } from '../media';
 import { fontSizePx, sizeInEm } from '../utils/helpers';
+import { PickerOnboarding } from './onboarding';
 
 const RECENT_KEY = 'recent';
 const ALL_KEY = 'All';
 const MAX_RECENT = 40;
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 520;
+const MIN_WIDTH = 280;
+const MIN_HEIGHT = 220;
 const MARGIN = 8;
 
 interface Rect {
@@ -40,7 +43,7 @@ interface Section {
 export class EmojiPicker {
 	private app: App;
 	private plugin: DiscordEmojiPickerPlugin;
-	private editor: Editor;
+	private editor?: Editor;
 	private containerEl!: HTMLElement;
 	private searchInput!: HTMLInputElement;
 	private tabEmojiBtn!: HTMLButtonElement;
@@ -50,8 +53,13 @@ export class EmojiPicker {
 	private scrollEl!: HTMLElement;
 	private tooltipEl!: HTMLElement;
 	private tooltipRaf = 0;
+	private onboarding?: PickerOnboarding;
 	private footerEl!: HTMLElement;
 	private countEl!: HTMLElement;
+	private footerMenuBtn!: HTMLButtonElement;
+	private resizeHandleEl?: HTMLElement;
+	private menuEl?: HTMLElement;
+	private menuOpen = false;
 	private emojiSections: Section[] = [];
 	private stickerSections: Section[] = [];
 	private sectionEls = new Map<string, HTMLElement>();
@@ -67,7 +75,7 @@ export class EmojiPicker {
 	constructor(
 		app: App,
 		plugin: DiscordEmojiPickerPlugin,
-		editor: Editor,
+		editor?: Editor,
 		initialQuery?: string,
 		initialMode?: Mode,
 	) {
@@ -95,9 +103,15 @@ export class EmojiPicker {
 	close() {
 		if (this.tooltipRaf) window.cancelAnimationFrame(this.tooltipRaf);
 		this.tooltipRaf = 0;
+		document.body.toggleClass('gl-resizing', false);
+		document.body.toggleClass('gl-moving', false);
+		this.onboarding?.destroy();
+		this.onboarding = undefined;
 		for (const fn of this.cleanup) fn();
 		this.cleanup = [];
+		this.menuOpen = false;
 		this.containerEl.remove();
+		this.tooltipEl.remove();
 	}
 
 	refresh() {
@@ -112,15 +126,243 @@ export class EmojiPicker {
 			attr: { 'data-theme': this.plugin.settings.pickerTheme },
 		});
 		document.body.appendChild(this.containerEl);
+		this.applyPanelSize();
 		this.applySizes();
 
-		this.tooltipEl = this.containerEl.createDiv({ cls: 'gl-picker-tooltip' });
+		this.tooltipEl = createDiv({ cls: 'gl-picker-tooltip' });
+		document.body.appendChild(this.tooltipEl);
 
 		this.buildSections();
 		this.buildTabs(this.containerEl);
 		this.buildSearch(this.containerEl);
 		this.buildBody(this.containerEl);
+		this.applyResizeHandle();
 		this.render();
+
+		if (
+			this.plugin.settings.showOnboardingHint &&
+			!this.plugin.settings.onboardingSeen
+		) {
+			this.runOnboarding();
+		}
+	}
+
+	private applyPanelSize() {
+		const { pickerWidth, pickerHeight } = this.plugin.settings;
+		if (pickerWidth && pickerHeight) {
+			this.containerEl.style.width = `${pickerWidth}px`;
+			this.containerEl.style.height = `${pickerHeight}px`;
+			return;
+		}
+		if (this.plugin.settings.pickerTheme !== 'compact') {
+			const width = clamp(Math.round(window.innerWidth * 0.38), 300, 440);
+			const height = clamp(
+				Math.round(window.innerHeight * 0.66),
+				380,
+				560,
+			);
+			this.containerEl.style.width = `${width}px`;
+			this.containerEl.style.height = `${height}px`;
+		}
+	}
+
+	private runOnboarding() {
+		if (this.onboarding) return;
+		this.onboarding = new PickerOnboarding(this.containerEl, {
+			openMenu: () => this.openMenu(),
+			closeMenu: () => this.closeMenu(),
+		});
+		this.onboarding.run(() => {
+			this.onboarding = undefined;
+			this.dismissOnboarding();
+		});
+	}
+
+	private dismissOnboarding() {
+		this.plugin.settings.onboardingSeen = true;
+		void this.plugin.saveSettings();
+	}
+
+	private applyResizeHandle() {
+		if (this.plugin.settings.pickerResizable && !this.resizeHandleEl) {
+			const handle = this.containerEl.createDiv({
+				cls: 'gl-picker-resize',
+				attr: {
+					'aria-label': 'Resize picker',
+					title: 'Drag to resize. Double-click to reset.',
+				},
+			});
+			this.resizeHandleEl = handle;
+
+			handle.addEventListener('pointerdown', (ev) => {
+				if (ev.button !== 0) return;
+				ev.preventDefault();
+				ev.stopPropagation();
+
+				const startX = ev.clientX;
+				const startY = ev.clientY;
+				const startWidth = this.containerEl.offsetWidth;
+				const startHeight = this.containerEl.offsetHeight;
+				const maxWidth = window.innerWidth - MARGIN * 2;
+				const maxHeight = window.innerHeight - MARGIN * 2;
+
+				handle.setPointerCapture(ev.pointerId);
+				document.body.toggleClass('gl-resizing', true);
+
+				const onMove = (mev: PointerEvent) => {
+					const width = clamp(
+						startWidth + mev.clientX - startX,
+						MIN_WIDTH,
+						maxWidth,
+					);
+					const height = clamp(
+						startHeight + mev.clientY - startY,
+						MIN_HEIGHT,
+						maxHeight,
+					);
+					this.containerEl.style.width = `${width}px`;
+					this.containerEl.style.height = `${height}px`;
+					this.onboarding?.reposition();
+				};
+				const onUp = () => {
+					handle.removeEventListener('pointermove', onMove);
+					handle.removeEventListener('pointerup', onUp);
+					document.body.toggleClass('gl-resizing', false);
+					if (!this.containerEl.isConnected) return;
+					this.plugin.settings.pickerWidth =
+						this.containerEl.offsetWidth;
+					this.plugin.settings.pickerHeight =
+						this.containerEl.offsetHeight;
+					void this.plugin.saveSettings();
+				};
+				handle.addEventListener('pointermove', onMove);
+				handle.addEventListener('pointerup', onUp);
+				this.cleanup.push(() => {
+					handle.removeEventListener('pointermove', onMove);
+					handle.removeEventListener('pointerup', onUp);
+					document.body.toggleClass('gl-resizing', false);
+				});
+			});
+
+			handle.addEventListener('dblclick', () => {
+				this.containerEl.style.removeProperty('width');
+				this.containerEl.style.removeProperty('height');
+				delete this.plugin.settings.pickerWidth;
+				delete this.plugin.settings.pickerHeight;
+				void this.plugin.saveSettings();
+			});
+		} else if (!this.plugin.settings.pickerResizable && this.resizeHandleEl) {
+			this.resizeHandleEl.remove();
+			this.resizeHandleEl = undefined;
+		}
+	}
+
+	private toggleMenu() {
+		if (this.menuOpen) this.closeMenu();
+		else this.openMenu();
+	}
+
+	private openMenu() {
+		if (!this.menuEl) {
+			this.menuEl = this.containerEl.createDiv({ cls: 'gl-picker-menu' });
+		}
+		this.menuEl.empty();
+
+		const moveBtn = this.menuEl.createEl('button', {
+			cls: 'gl-picker-menu-item gl-move',
+			attr: { type: 'button' },
+		});
+		setIcon(moveBtn, 'move');
+		moveBtn.createSpan({ cls: 'gl-picker-menu-label', text: 'Move' });
+		this.bindTooltip(moveBtn, 'Hold and drag to move the picker.');
+
+		moveBtn.addEventListener('pointerdown', (ev) => {
+			if (ev.button !== 0) return;
+			ev.preventDefault();
+			ev.stopPropagation();
+
+			const startX = ev.clientX;
+			const startY = ev.clientY;
+			const startLeft =
+				parseFloat(this.containerEl.style.left) ||
+				this.containerEl.offsetLeft;
+			const startTop =
+				parseFloat(this.containerEl.style.top) ||
+				this.containerEl.offsetTop;
+
+			moveBtn.setPointerCapture(ev.pointerId);
+			moveBtn.toggleClass('is-dragging', true);
+			document.body.toggleClass('gl-moving', true);
+			if (!this.onboarding) this.closeMenu();
+
+			const onMove = (mev: PointerEvent) => {
+				const left = clamp(
+					startLeft + mev.clientX - startX,
+					MARGIN,
+					window.innerWidth - this.containerEl.offsetWidth - MARGIN,
+				);
+				const top = clamp(
+					startTop + mev.clientY - startY,
+					MARGIN,
+					window.innerHeight - this.containerEl.offsetHeight - MARGIN,
+				);
+				this.containerEl.style.left = `${left}px`;
+				this.containerEl.style.top = `${top}px`;
+			};
+			const onUp = () => {
+				moveBtn.removeEventListener('pointermove', onMove);
+				moveBtn.removeEventListener('pointerup', onUp);
+				moveBtn.toggleClass('is-dragging', false);
+				document.body.toggleClass('gl-moving', false);
+			};
+			moveBtn.addEventListener('pointermove', onMove);
+			moveBtn.addEventListener('pointerup', onUp);
+			this.cleanup.push(() => {
+				moveBtn.removeEventListener('pointermove', onMove);
+				moveBtn.removeEventListener('pointerup', onUp);
+				document.body.toggleClass('gl-moving', false);
+			});
+		});
+
+		const resizeRow = this.menuEl.createEl('button', {
+			cls: 'gl-picker-menu-item gl-resize-item',
+			attr: { type: 'button' },
+		});
+		setIcon(resizeRow, 'maximize');
+		resizeRow.createSpan({ cls: 'gl-picker-menu-label', text: 'Resize' });
+		const switchEl = resizeRow.createSpan({
+			cls: `gl-picker-switch${this.plugin.settings.pickerResizable ? ' is-on' : ''}`,
+		});
+		this.bindTooltip(resizeRow, 'Turn the resize handle on or off.');
+		resizeRow.addEventListener('click', () => {
+			this.plugin.settings.pickerResizable =
+				!this.plugin.settings.pickerResizable;
+			switchEl.toggleClass('is-on', this.plugin.settings.pickerResizable);
+			this.applyResizeHandle();
+			void this.plugin.saveSettings();
+		});
+
+		this.menuEl.toggleClass('is-open', true);
+		this.menuOpen = true;
+
+		const onDocMouseDown = (ev: MouseEvent) => {
+			if (
+				ev.target instanceof Node &&
+				!this.menuEl?.contains(ev.target) &&
+				!this.footerMenuBtn.contains(ev.target)
+			) {
+				this.closeMenu();
+			}
+		};
+		document.addEventListener('mousedown', onDocMouseDown, true);
+		this.cleanup.push(() =>
+			document.removeEventListener('mousedown', onDocMouseDown, true),
+		);
+	}
+
+	private closeMenu() {
+		this.menuEl?.toggleClass('is-open', false);
+		this.menuOpen = false;
 	}
 
 	private applySizes() {
@@ -144,7 +386,8 @@ export class EmojiPicker {
 		const onDocKeyDown = (ev: KeyboardEvent) => {
 			if (ev.key === 'Escape') {
 				ev.stopPropagation();
-				this.close();
+				if (this.menuOpen) this.closeMenu();
+				else this.close();
 			}
 		};
 		document.addEventListener('keydown', onDocKeyDown, true);
@@ -182,6 +425,7 @@ export class EmojiPicker {
 	}
 
 	private cursorCoords(): Rect | null {
+		if (!this.editor) return null;
 		try {
 			const offset = this.editor.posToOffset(this.editor.getCursor());
 			const cm = (this.editor as unknown as { cm?: CmView }).cm;
@@ -308,7 +552,37 @@ export class EmojiPicker {
 		const footer = container.createDiv({ cls: 'gl-picker-footer' });
 		this.footerEl = footer.createSpan({ cls: 'gl-picker-footer-folder' });
 		this.countEl = footer.createSpan({ cls: 'gl-picker-footer-count' });
+		const helpBtn = footer.createEl('button', {
+			cls: 'gl-picker-help-btn',
+			attr: { type: 'button', 'aria-label': 'How to use the picker' },
+		});
+		setIcon(helpBtn, 'help');
+		helpBtn.addEventListener('click', () => this.runOnboarding());
+		this.footerMenuBtn = footer.createEl('button', {
+			cls: 'gl-picker-menu-btn',
+			attr: { type: 'button', 'aria-label': 'Picker options' },
+		});
+		setIcon(this.footerMenuBtn, 'more-horizontal');
+		this.footerMenuBtn.addEventListener('click', () => this.toggleMenu());
 		this.updateFooter();
+	}
+
+	private bindTooltip(el: HTMLElement, text: string) {
+		el.addEventListener('mouseenter', (ev) =>
+			this.showTextTooltip(ev.clientX, ev.clientY, text),
+		);
+		el.addEventListener('mousemove', (ev) =>
+			this.moveTooltip(ev.clientX, ev.clientY),
+		);
+		el.addEventListener('mouseleave', () => this.hideTooltip());
+	}
+
+	private showTextTooltip(clientX: number, clientY: number, text: string) {
+		this.tooltipEl.empty();
+		this.tooltipEl.createDiv({ cls: 'gl-picker-tooltip-label', text });
+		this.tooltipEl.toggleClass('gl-picker-tooltip-text', true);
+		this.tooltipEl.toggleClass('is-visible', true);
+		this.moveTooltip(clientX, clientY);
 	}
 
 	private currentSections(): Section[] {
@@ -591,6 +865,10 @@ export class EmojiPicker {
 	}
 
 	private insertItem(item: MediaFile) {
+		if (!this.editor) {
+			new Notice('Open a note to insert emojis or stickers.');
+			return;
+		}
 		const style = this.plugin.settings.insertStyle;
 		let text: string;
 		if (style === 'shortcode') {
@@ -687,6 +965,7 @@ export class EmojiPicker {
 
 	private showTooltip(clientX: number, clientY: number, item: MediaFile) {
 		this.tooltipEl.empty();
+		this.tooltipEl.toggleClass('gl-picker-tooltip-text', false);
 		this.tooltipEl.createEl('img', {
 			attr: {
 				src: resourcePath(this.app, item.file),
