@@ -121,7 +121,7 @@ export class ImportModal extends Modal {
 		contentEl.empty();
 		contentEl.createEl('h2', { text: 'Import emojis & stickers' });
 
-		new Setting(contentEl)
+		const kindSetting = new Setting(contentEl)
 			.setName('Import into')
 			.addDropdown((dropdown) =>
 				dropdown
@@ -139,12 +139,14 @@ export class ImportModal extends Modal {
 						this.refreshSetDropdown();
 					}),
 			);
+		kindSetting.settingEl.toggleClass('gl-import-kind', true);
 
 		const setSetting = new Setting(contentEl)
 			.setName('Set (subfolder)')
 			.setDesc(
 				'Groups images into a subfolder, shown as a set in the picker. Leave empty for the folder root.',
 			);
+		setSetting.settingEl.toggleClass('gl-import-set-setting', true);
 		setSetting.addDropdown((dropdown) => {
 			this.setDropdown = dropdown;
 			this.refreshSetDropdown();
@@ -188,6 +190,7 @@ export class ImportModal extends Modal {
 		);
 
 		const newSetSetting = new Setting(contentEl).setName('New set');
+		newSetSetting.settingEl.toggleClass('gl-import-new-set', true);
 		newSetSetting.addText((text) => {
 			this.setNameInput = text;
 			text.setPlaceholder('Set name');
@@ -216,6 +219,7 @@ export class ImportModal extends Modal {
 			.setDesc(
 				'Optional second level inside the set — shown as a horizontal category bar in the picker.',
 			);
+		categorySetting.settingEl.toggleClass('gl-import-category', true);
 		categorySetting.addText((text) => {
 			text.setPlaceholder('E.g. Faces, animals, ...');
 			text.onChange((value) => {
@@ -1061,6 +1065,34 @@ function delay(ms: number): Promise<void> {
 
 function importTourSteps(): TourStep[] {
 	return [
+		{
+			selector: '.gl-import-kind',
+			title: 'Import into',
+			text: 'Choose whether new images land in the emoji folder or the sticker folder.',
+			placement: 'bottom',
+			hue: 190,
+		},
+		{
+			selector: '.gl-import-set-setting',
+			title: 'Set (subfolder)',
+			text: 'Groups images into a set inside the folder — sets show up as sections in the picker. Leave it empty for the folder root.',
+			placement: 'bottom',
+			hue: 220,
+		},
+		{
+			selector: '.gl-import-new-set',
+			title: 'New set',
+			text: 'Type a name and press Create to make a new set before adding images.',
+			placement: 'bottom',
+			hue: 245,
+		},
+		{
+			selector: '.gl-import-category',
+			title: 'Category',
+			text: 'Optional second level inside a set — shown as a horizontal category bar in the picker.',
+			placement: 'bottom',
+			hue: 275,
+		},
 		{
 			selector: '.gl-import-dropzone',
 			title: 'Drop zone',

@@ -13,6 +13,7 @@ tours** toggle controls both.
 ## Notes
 
 - Tours cover: picker (search, tabs, ⋮ menu, move, resize toggle, resize corner)
-  and import (drop zone, source tabs, queue, import button).
+  and import (import into, set, new set, category, drop zone, source tabs,
+  queue, import button).
 - `GuidedTour` renders ring/bubble layers above its container's content, so it
   can run inside any container (fixed panel or modal).
