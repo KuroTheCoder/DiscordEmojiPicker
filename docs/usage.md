@@ -6,6 +6,7 @@ This guide covers every feature of Discord Emoji Picker.
 - [Insert styles](#insert-styles)
 - [Shortcodes](#shortcodes)
 - [Sets](#sets)
+- [Guided tours](#guided-tours)
 - [Importing emojis & stickers](#importing-emojis--stickers)
 - [Cloning from Discord servers](#cloning-from-discord-servers)
 - [Theming the picker](#theming-the-picker)
@@ -13,7 +14,7 @@ This guide covers every feature of Discord Emoji Picker.
 
 ## The picker
 
-Open the picker with the smile ribbon icon or the **Open emoji & sticker picker** command (it needs an open note — the picker opens at your cursor).
+Open the picker with the smile ribbon icon or the **Open emoji & sticker picker** command. When a note is active it opens at your cursor; otherwise it opens at a corner of the window (inserting shows a notice telling you to open a note).
 
 - **Emoji / Sticker tabs** — switch between the two media types.
 - **Search** — filters items by file name and path. Search the emoji tab to find emojis, the sticker tab for stickers.
@@ -21,7 +22,8 @@ Open the picker with the smile ribbon icon or the **Open emoji & sticker picker*
 - **Insert** — click any image. It is inserted at the cursor using the configured [insert style](#insert-styles) and size.
 - **Hover** — hovers show a larger preview with the file name.
 - **Keyboard** — type to search, `Esc` closes, arrows move through the grid, `Enter` inserts.
-- **Footer** — shows the current folder and how many items are visible.
+- **Move & resize** — open the **⋮ menu** in the footer: **Move** lets you hold and drag the panel anywhere on screen; **Resize** toggles a corner handle (drag to resize, double-click to reset, size is remembered). Resizing can also be enabled in **Settings → Resizable picker**.
+- **Footer** — shows the current folder and item count, plus the **⋮ menu** (Move / Resize / help) and the **?** button that replays the picker's guided tour.
 - **Import shortcut** — the download button in the search bar opens the import modal.
 
 The picker also opens with a pre-filled search when you trigger it from certain contexts (e.g. typing a shortcode that doesn't exist yet).
@@ -59,6 +61,17 @@ The default folders are `discordemojipicker/emojis` and `discordemojipicker/stic
 - **On first run**, the plugin seeds a small sample set — the **Cats** emoji set and the **Pets** sticker set — so you can try everything immediately. Delete them whenever you like.
 - **Create / delete / rename / open** sets from **Settings → Emoji sets / Sticker sets**, or from the set dropdown in the import modal.
 - Deleting a set moves every image in it to your trash and removes the folder — you can't undo it, so confirm carefully.
+
+## Guided tours
+
+Both the picker and the import modal include a guided tour that walks through the essentials with a highlighted ring and a speech bubble. The tours show automatically the first time you open the picker or the import modal, and can be replayed at any time:
+
+- Picker: press the **?** button in the picker footer, or **Settings → Start picker onboarding**.
+- Import modal: press the **?** button in the modal footer, or **Settings → Start import onboarding**.
+
+Every step has a **Next** button and a **Back** button; **Skip** dismisses the tour. Some steps (Move, Resize, resize corner) stay on screen until you press **Got it**, so you can actually try the interaction. Turning off **Settings → Show onboarding tours** hides both tours; turning it back on replays them.
+
+The picker tour covers: search, tabs, the ⋮ menu (and its button), Move, Resize toggle, and the resize corner. The import tour covers: Import into, Set (subfolder), New set, Category, drop zone, source tabs, queue, and Import.
 
 ## Importing emojis & stickers
 
@@ -159,5 +172,8 @@ The variables live on `.gl-picker` — see `styles.css` for the full list.
 | Render shortcodes in editor | Show shortcode images in live preview / source mode |
 | Emoji size / Sticker size | Grid size in the picker and inserted size |
 | Picker theme | Default, Compact, Vibrant, or Minimal |
+| Resizable picker | Adds a drag handle to the picker corner (double-click resets) |
+| Show onboarding tours | Replay the picker and import tours the next time they open |
+| Start picker onboarding / Start import onboarding | Play either guided tour right away |
 | Clear recently used | Empties the recently used row in the picker |
 | Discord token / Token type / Test connection | Credentials for cloning from Discord servers |

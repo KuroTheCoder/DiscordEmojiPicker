@@ -2,6 +2,31 @@
 
 All notable changes to Discord Emoji Picker.
 
+## 1.2.5 - 2026-08-15
+
+### Added
+
+- **Resizable picker**: drag the bottom-right corner handle to resize the picker — the size is remembered between sessions, and double-clicking the handle resets it. Off by default; enable it from the picker's ⋮ menu or **Settings → Resizable picker**.
+- **Move the picker**: the picker's new ⋮ menu (footer) has a **Move** item — hold it and drag to place the picker anywhere on screen.
+- **Picker ⋮ menu**: Move, Resize toggle, and a **?** button that replays the guided tour.
+- **Guided onboarding tours** for the picker and the import modal, shown on first use and re-runnable anytime (picker footer **?** button, import modal footer **?** button, or **Settings → Start picker onboarding / Start import onboarding**):
+  - Picker tour: search, tabs, ⋮ menu (with the ⋮ button highlighted), Move, Resize toggle, resize corner.
+  - Import tour: Import into, Set (subfolder), New set, Category, drop zone, source tabs, queue, import.
+  - Sticky steps (Move, Resize, resize corner) stay until you press **Got it**; every step has a **Back** button; **Skip** dismisses the tour.
+- **Hover tooltips** for the picker's menu items and a larger preview with the file name for emojis and stickers.
+- **Settings**: **Show onboarding tours** toggle controls both tours; **Start picker onboarding** and **Start import onboarding** replay them on demand.
+
+### Changed
+
+- The tour engine is now a generic `GuidedTour` (`src/ui/tour.ts`) that works inside any container — the picker panel or the import modal.
+- The picker opens without needing an active note (inserting shows a friendly notice instead).
+
+### Fixed
+
+- Onboarding no longer broke the picker layout: highlighting the ⋮ menu or the resize corner kept overriding their absolute positioning.
+- Tour highlights now track the menu's open animation, and small targets (the resize corner) get a proper-sized ring.
+- Clicking a tour target now advances the tour even for static elements (the dim layer used to swallow the click).
+
 ## 1.2.0 - 2026-08-14
 
 ### Added

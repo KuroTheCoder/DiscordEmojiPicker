@@ -12,6 +12,8 @@ A Discord-style emoji and sticker picker for [Obsidian](https://obsidian.md). It
 ## Features
 
 - **Emoji & sticker pills** with set navigation, live search, and a "recently used" row.
+- **Resizable & movable picker**: drag the corner handle to resize (remembered between sessions, double-click to reset) or hold **Move** in the ⋮ menu to drag the panel anywhere.
+- **Guided onboarding tours** for the picker and the import modal — shown on first use, re-runnable anytime from the **?** buttons or Settings.
 - **Three insert styles**: shortcode (`:name:`), native embed (`[[image|size]]`), or raw HTML. Shortcodes render as images in the editor and reading mode.
 - **Import modal** with a queue: drag & drop or paste links from Discord, local files, clipboard, note embeds, and emoji packs.
 - **Clone from Discord servers** using a token — grab emojis and stickers from servers you're in.
@@ -52,6 +54,9 @@ Then reload Obsidian and enable the plugin in **Settings → Community plugins**
 | Render shortcodes in editor | Show shortcode images in live preview / source mode |
 | Emoji size / Sticker size | Grid size in the picker and inserted size |
 | Picker theme | Default, Compact, Vibrant, or Minimal |
+| Resizable picker | Adds a drag handle to the picker corner (double-click resets) |
+| Show onboarding tours | Replay the picker and import tours the next time they open |
+| Start picker onboarding / Start import onboarding | Play either guided tour right away |
 | Clear recently used | Empties the recently used row in the picker |
 | Discord token / Token type / Test connection | Credentials for cloning from Discord servers |
 

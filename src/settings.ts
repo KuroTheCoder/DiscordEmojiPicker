@@ -40,6 +40,7 @@ export interface DiscordEmojiPickerSettings {
 	pickerResizable: boolean;
 	insertStyle: InsertStyle;
 	onboardingSeen: boolean;
+	importOnboardingSeen: boolean;
 	showOnboardingHint: boolean;
 	renderShortcodesInEditor: boolean;
 	pickerTheme: PickerTheme;
@@ -57,6 +58,7 @@ export const DEFAULT_SETTINGS: DiscordEmojiPickerSettings = {
 	pickerResizable: false,
 	insertStyle: 'shortcode',
 	onboardingSeen: false,
+	importOnboardingSeen: false,
 	showOnboardingHint: true,
 	renderShortcodesInEditor: true,
 	pickerTheme: 'default',
@@ -243,10 +245,12 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Show onboarding tour')
-			.setDesc('Replay the guided tour on the next picker open.')
+			.setName('Show onboarding tours')
+			.setDesc(
+				'Replay the guided tours the next time the picker opens or you import.',
+			)
 			.setTooltip(
-				'Shows a guided tour the first time the picker opens. Turn it off to hide it; turning it back on re-shows it.',
+				'Shows a guided tour the first time the picker opens and the first time the import modal opens. Turn it off to hide both; turning it back on re-shows them.',
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -254,17 +258,27 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.showOnboardingHint = value;
 						this.plugin.settings.onboardingSeen = !value;
+						this.plugin.settings.importOnboardingSeen = !value;
 						await this.plugin.saveSettings();
 					}),
 			);
 
 		new Setting(containerEl)
-			.setName('Start onboarding')
-			.setDesc('Open the picker and play the guided tour again.')
+			.setName('Start picker onboarding')
+			.setDesc('Open the picker and play its guided tour again.')
 			.addButton((btn) =>
 				btn
 					.setButtonText('Start')
 					.onClick(() => this.plugin.startOnboarding()),
+			);
+
+		new Setting(containerEl)
+			.setName('Start import onboarding')
+			.setDesc('Open the import modal and play its guided tour again.')
+			.addButton((btn) =>
+				btn
+					.setButtonText('Start')
+					.onClick(() => this.plugin.startImportOnboarding()),
 			);
 
 		new Setting(containerEl)
@@ -416,9 +430,9 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 				'pickerResizable',
 			),
 			this.settingDef(
-				'Show onboarding tour',
-				'Replay the guided tour on the next picker open.',
-				'Shows a guided tour the first time the picker opens. Turn it off to hide it; turning it back on re-shows it.',
+				'Show onboarding tours',
+				'Replay the guided tours the next time the picker opens or you import.',
+				'Shows a guided tour the first time the picker opens and the first time the import modal opens. Turn it off to hide both; turning it back on re-shows them.',
 				['hint', 'onboarding', 'tip', 'tour'],
 				(setting) => {
 					setting.addToggle((toggle) =>
@@ -427,17 +441,25 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 							.onChange(async (value) => {
 								this.plugin.settings.showOnboardingHint = value;
 								this.plugin.settings.onboardingSeen = !value;
+								this.plugin.settings.importOnboardingSeen = !value;
 								await this.plugin.saveSettings();
 							}),
 					);
 				},
 			),
 			this.actionDef(
-				'Start onboarding',
-				'Open the picker and play the guided tour again.',
+				'Start picker onboarding',
+				'Open the picker and play its guided tour again.',
 				'Replays the tour immediately so you can see how to move and resize the picker.',
 				'Start',
 				() => this.plugin.startOnboarding(),
+			),
+			this.actionDef(
+				'Start import onboarding',
+				'Open the import modal and play its guided tour again.',
+				'Replays the import tour: drop zone, source tabs, queue, import.',
+				'Start',
+				() => this.plugin.startImportOnboarding(),
 			),
 			this.actionDef(
 				'Clear recently used',

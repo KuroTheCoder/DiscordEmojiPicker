@@ -36,6 +36,7 @@ import {
 	normalizeCode,
 } from '../packs';
 import { renderSystemEmojiPng, SYSTEM_EMOJI_GROUPS } from '../system-emoji';
+import { GuidedTour, TourStep } from './tour';
 
 type ImportMode = 'url' | 'discord' | 'clipboard' | 'note' | 'pack';
 
@@ -108,6 +109,7 @@ export class ImportModal extends Modal {
 	private selectedGuildId = '';
 	private discordEmojis: DiscordEmoji[] = [];
 	private discordStickers: DiscordSticker[] = [];
+	private onboarding?: GuidedTour;
 
 	constructor(app: App, plugin: DiscordEmojiPickerPlugin) {
 		super(app);
@@ -119,7 +121,7 @@ export class ImportModal extends Modal {
 		contentEl.empty();
 		contentEl.createEl('h2', { text: 'Import emojis & stickers' });
 
-		new Setting(contentEl)
+		const kindSetting = new Setting(contentEl)
 			.setName('Import into')
 			.addDropdown((dropdown) =>
 				dropdown
@@ -137,12 +139,14 @@ export class ImportModal extends Modal {
 						this.refreshSetDropdown();
 					}),
 			);
+		kindSetting.settingEl.toggleClass('gl-import-kind', true);
 
 		const setSetting = new Setting(contentEl)
 			.setName('Set (subfolder)')
 			.setDesc(
 				'Groups images into a subfolder, shown as a set in the picker. Leave empty for the folder root.',
 			);
+		setSetting.settingEl.toggleClass('gl-import-set-setting', true);
 		setSetting.addDropdown((dropdown) => {
 			this.setDropdown = dropdown;
 			this.refreshSetDropdown();
@@ -186,6 +190,7 @@ export class ImportModal extends Modal {
 		);
 
 		const newSetSetting = new Setting(contentEl).setName('New set');
+		newSetSetting.settingEl.toggleClass('gl-import-new-set', true);
 		newSetSetting.addText((text) => {
 			this.setNameInput = text;
 			text.setPlaceholder('Set name');
@@ -214,6 +219,7 @@ export class ImportModal extends Modal {
 			.setDesc(
 				'Optional second level inside the set — shown as a horizontal category bar in the picker.',
 			);
+		categorySetting.settingEl.toggleClass('gl-import-category', true);
 		categorySetting.addText((text) => {
 			text.setPlaceholder('E.g. Faces, animals, ...');
 			text.onChange((value) => {
@@ -288,11 +294,49 @@ export class ImportModal extends Modal {
 			this.renderQueue();
 			this.setStatus('');
 		});
+		const helpBtn = footer.createEl('button', {
+			cls: 'gl-import-help',
+			attr: { type: 'button', 'aria-label': 'How to import' },
+		});
+		setIcon(helpBtn, 'help');
+		helpBtn.addEventListener('click', () => this.runOnboarding());
+
+		this.maybeRunOnboarding();
 	}
 
 	onClose() {
+		this.onboarding?.destroy();
+		this.onboarding = undefined;
 		for (const url of this.objectUrls) URL.revokeObjectURL(url);
 		this.objectUrls = [];
+	}
+
+	private maybeRunOnboarding() {
+		if (
+			this.plugin.settings.showOnboardingHint &&
+			!this.plugin.settings.importOnboardingSeen
+		) {
+			this.runOnboarding();
+		}
+	}
+
+	private runOnboarding() {
+		if (this.onboarding) return;
+		this.onboarding = new GuidedTour(
+			this.contentEl,
+			importTourSteps(),
+			{},
+			true,
+		);
+		this.onboarding.run(() => {
+			this.onboarding = undefined;
+			this.dismissOnboarding();
+		});
+	}
+
+	private dismissOnboarding() {
+		this.plugin.settings.importOnboardingSeen = true;
+		void this.plugin.saveSettings();
 	}
 
 	private setMode(mode: ImportMode) {
@@ -1017,6 +1061,67 @@ private async runImport() {
 
 function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function importTourSteps(): TourStep[] {
+	return [
+		{
+			selector: '.gl-import-kind',
+			title: 'Import into',
+			text: 'Choose whether new images land in the emoji folder or the sticker folder.',
+			placement: 'bottom',
+			hue: 190,
+		},
+		{
+			selector: '.gl-import-set-setting',
+			title: 'Set (subfolder)',
+			text: 'Groups images into a set inside the folder — sets show up as sections in the picker. Leave it empty for the folder root.',
+			placement: 'bottom',
+			hue: 220,
+		},
+		{
+			selector: '.gl-import-new-set',
+			title: 'New set',
+			text: 'Type a name and press Create to make a new set before adding images.',
+			placement: 'bottom',
+			hue: 245,
+		},
+		{
+			selector: '.gl-import-category',
+			title: 'Category',
+			text: 'Optional second level inside a set — shown as a horizontal category bar in the picker.',
+			placement: 'bottom',
+			hue: 275,
+		},
+		{
+			selector: '.gl-import-dropzone',
+			title: 'Drop zone',
+			text: 'Drag emojis or stickers straight from Discord — or from your computer — into this area.',
+			placement: 'bottom',
+			hue: 200,
+		},
+		{
+			selector: '.gl-import-tabs',
+			title: 'Sources',
+			text: 'Pick a source: paste links, read your clipboard, scan the current note, or download a whole emoji pack.',
+			placement: 'bottom',
+			hue: 265,
+		},
+		{
+			selector: '.gl-import-queue',
+			title: 'Queue',
+			text: 'Everything you add lands here. Review the list and remove anything you do not want.',
+			placement: 'top',
+			hue: 45,
+		},
+		{
+			selector: '.gl-import-footer',
+			title: 'Import',
+			text: 'Saves the queued items into your emoji and sticker folders, ready for the picker.',
+			placement: 'top',
+			hue: 130,
+		},
+	];
 }
 
 async function importQueuedItem(

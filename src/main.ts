@@ -67,6 +67,12 @@ export default class DiscordEmojiPickerPlugin extends Plugin {
 		void this.saveSettings().then(() => this.openPicker());
 	}
 
+	startImportOnboarding() {
+		this.settings.importOnboardingSeen = false;
+		this.settings.showOnboardingHint = true;
+		void this.saveSettings().then(() => this.openImport());
+	}
+
 	refreshPicker() {
 		this.picker?.refresh();
 	}

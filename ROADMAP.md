@@ -1,22 +1,19 @@
 # Roadmap
 
-## Next up
+## Done
 
 ### Import onboarding
-The picker has a guided tour (`src/emoji/onboarding.ts`, re-runnable via the `?`
-button in the footer or **Settings → Start onboarding**), but the import modal
-(`src/ui/import.ts`) does not.
-
-Ideas for a future import tour:
-- Highlight the dropzone, the import source tabs, and the import queue.
-- Reuse the ring/bubble system from `PickerOnboarding` (it renders above a
-  container's content, so it works for modals too).
-- Add an `importSeen` setting mirroring `onboardingSeen`, shown on first import
-  and re-runnable from a small `?` in the modal footer.
-- Keep the tour short: dropzone → source → queue → confirm. Sticky "Got it"
-  steps only where a real interaction is required.
+The import modal has its own guided tour (drop zone, source tabs, queue,
+import button), shown on first import and re-runnable via the `?` button in the
+modal footer or **Settings → Start import onboarding**. It reuses the generic
+`GuidedTour` (`src/ui/tour.ts`), which the picker tour also uses. The
+`importOnboardingSeen` setting mirrors `onboardingSeen`; the **Show onboarding
+tours** toggle controls both.
 
 ## Notes
 
-- The picker tour covers: search, tabs, ⋮ menu, move, resize toggle, resize corner.
-- Import (button in the picker's search bar) has no tour yet — this is the item above.
+- Tours cover: picker (search, tabs, ⋮ menu, move, resize toggle, resize corner)
+  and import (import into, set, new set, category, drop zone, source tabs,
+  queue, import button).
+- `GuidedTour` renders ring/bubble layers above its container's content, so it
+  can run inside any container (fixed panel or modal).
