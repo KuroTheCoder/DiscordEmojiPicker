@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Notice, Plugin } from 'obsidian';
+import { Editor, MarkdownView, Plugin } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
 	DiscordEmojiPickerSettings,
@@ -52,10 +52,6 @@ export default class DiscordEmojiPickerPlugin extends Plugin {
 		const targetEditor =
 			editor ??
 			this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
-		if (!targetEditor) {
-			new Notice('Open a note to insert emojis or stickers.');
-			return;
-		}
 		if (this.picker) this.picker.close();
 		this.picker = new EmojiPicker(this.app, this, targetEditor, query, kind);
 		this.picker.open();
@@ -63,6 +59,12 @@ export default class DiscordEmojiPickerPlugin extends Plugin {
 
 	openImport() {
 		new ImportModal(this.app, this).open();
+	}
+
+	startOnboarding() {
+		this.settings.onboardingSeen = false;
+		this.settings.showOnboardingHint = true;
+		void this.saveSettings().then(() => this.openPicker());
 	}
 
 	refreshPicker() {

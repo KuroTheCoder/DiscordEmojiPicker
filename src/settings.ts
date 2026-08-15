@@ -35,7 +35,12 @@ export interface DiscordEmojiPickerSettings {
 	recentlyUsed: string[];
 	emojiSize: number;
 	stickerSize: number;
+	pickerWidth?: number;
+	pickerHeight?: number;
+	pickerResizable: boolean;
 	insertStyle: InsertStyle;
+	onboardingSeen: boolean;
+	showOnboardingHint: boolean;
 	renderShortcodesInEditor: boolean;
 	pickerTheme: PickerTheme;
 	discordToken: string;
@@ -49,7 +54,10 @@ export const DEFAULT_SETTINGS: DiscordEmojiPickerSettings = {
 	recentlyUsed: [],
 	emojiSize: 42,
 	stickerSize: 96,
+	pickerResizable: false,
 	insertStyle: 'shortcode',
+	onboardingSeen: false,
+	showOnboardingHint: true,
 	renderShortcodesInEditor: true,
 	pickerTheme: 'default',
 	discordToken: '',
@@ -220,6 +228,46 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName('Resizable picker')
+			.setDesc('Allow dragging the picker corner to resize it.')
+			.setTooltip(
+				'Off by default. When enabled, a handle appears on hover at the bottom-right corner; drag it to resize, double-click to reset.',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.pickerResizable)
+					.onChange(async (value) => {
+						this.plugin.settings.pickerResizable = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Show onboarding tour')
+			.setDesc('Replay the guided tour on the next picker open.')
+			.setTooltip(
+				'Shows a guided tour the first time the picker opens. Turn it off to hide it; turning it back on re-shows it.',
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showOnboardingHint)
+					.onChange(async (value) => {
+						this.plugin.settings.showOnboardingHint = value;
+						this.plugin.settings.onboardingSeen = !value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName('Start onboarding')
+			.setDesc('Open the picker and play the guided tour again.')
+			.addButton((btn) =>
+				btn
+					.setButtonText('Start')
+					.onClick(() => this.plugin.startOnboarding()),
+			);
+
+		new Setting(containerEl)
 			.setName('Clear recently used')
 			.setDesc('Remove the emoji and sticker history shown in the picker.')
 			.setTooltip('Empties the recently used row in both pills.')
@@ -360,6 +408,36 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 					['vibrant', 'Vibrant'],
 					['minimal', 'Minimal'],
 				],
+			),
+			this.toggleDef(
+				'Resizable picker',
+				'Allow dragging the picker corner to resize it.',
+				'Off by default. When enabled, a handle appears on hover at the bottom-right corner; drag it to resize, double-click to reset.',
+				'pickerResizable',
+			),
+			this.settingDef(
+				'Show onboarding tour',
+				'Replay the guided tour on the next picker open.',
+				'Shows a guided tour the first time the picker opens. Turn it off to hide it; turning it back on re-shows it.',
+				['hint', 'onboarding', 'tip', 'tour'],
+				(setting) => {
+					setting.addToggle((toggle) =>
+						toggle
+							.setValue(this.plugin.settings.showOnboardingHint)
+							.onChange(async (value) => {
+								this.plugin.settings.showOnboardingHint = value;
+								this.plugin.settings.onboardingSeen = !value;
+								await this.plugin.saveSettings();
+							}),
+					);
+				},
+			),
+			this.actionDef(
+				'Start onboarding',
+				'Open the picker and play the guided tour again.',
+				'Replays the tour immediately so you can see how to move and resize the picker.',
+				'Start',
+				() => this.plugin.startOnboarding(),
 			),
 			this.actionDef(
 				'Clear recently used',
@@ -507,7 +585,7 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 		name: string,
 		desc: string,
 		tooltip: string,
-		key: 'renderShortcodesInEditor',
+		key: 'renderShortcodesInEditor' | 'pickerResizable',
 	): SettingDefinitionRender {
 		return this.settingDef(
 			name,
