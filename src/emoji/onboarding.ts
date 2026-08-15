@@ -1,5 +1,6 @@
 interface OnboardingStep {
 	selector: string;
+	title: string;
 	text: string;
 	placement: 'top' | 'bottom';
 	hue: number;
@@ -19,8 +20,10 @@ export class PickerOnboarding {
 	private ringEl!: HTMLElement;
 	private bubbleEl!: HTMLElement;
 	private stepBadgeEl!: HTMLElement;
+	private titleEl!: HTMLElement;
 	private textEl!: HTMLElement;
 	private dotsEl!: HTMLElement;
+	private prevBtn!: HTMLButtonElement;
 	private nextBtn!: HTMLButtonElement;
 	private steps: OnboardingStep[] = [];
 	private index = 0;
@@ -63,24 +66,28 @@ export class PickerOnboarding {
 		this.steps = [
 			{
 				selector: '.gl-picker-search input',
+				title: 'Search',
 				text: 'Search emojis and stickers by name as you type.',
 				placement: 'bottom',
 				hue: 205,
 			},
 			{
 				selector: '.gl-picker-tabs',
+				title: 'Tabs',
 				text: 'Switch between Emojis and Stickers.',
 				placement: 'bottom',
 				hue: 265,
 			},
 			{
 				selector: '.gl-picker-menu',
+				title: 'Menu',
 				text: 'The ⋮ menu holds the Move and Resize options.',
 				placement: 'top',
 				hue: 32,
 			},
 			{
 				selector: '.gl-picker-menu-item.gl-move',
+				title: 'Move',
 				text: 'Hold Move and drag to place the picker anywhere on screen.',
 				placement: 'top',
 				hue: 130,
@@ -88,6 +95,7 @@ export class PickerOnboarding {
 			},
 			{
 				selector: '.gl-picker-menu-item.gl-resize-item',
+				title: 'Resize',
 				text: 'Toggle Resize on — a handle appears on the corner so you can drag to resize.',
 				placement: 'top',
 				hue: 45,
@@ -95,6 +103,7 @@ export class PickerOnboarding {
 			},
 			{
 				selector: '.gl-picker-resize',
+				title: 'Resize corner',
 				text: 'Drag the corner to resize the picker. Double-click the corner to reset.',
 				placement: 'top',
 				hue: 285,
@@ -111,10 +120,15 @@ export class PickerOnboarding {
 		this.bubbleEl = this.uiEl.createDiv({ cls: 'gl-onboard-bubble' });
 		const header = this.bubbleEl.createDiv({ cls: 'gl-onboard-header' });
 		this.stepBadgeEl = header.createDiv({ cls: 'gl-onboard-badge' });
-		header.createSpan({ cls: 'gl-onboard-kicker', text: 'Quick tour' });
+		this.titleEl = header.createDiv({ cls: 'gl-onboard-title' });
 		this.textEl = this.bubbleEl.createDiv({ cls: 'gl-onboard-text' });
 
 		const actions = this.bubbleEl.createDiv({ cls: 'gl-onboard-actions' });
+		this.prevBtn = actions.createEl('button', {
+			cls: 'gl-onboard-prev is-hidden',
+			attr: { type: 'button' },
+			text: 'Back',
+		});
 		const skipBtn = actions.createEl('button', {
 			cls: 'gl-onboard-skip',
 			attr: { type: 'button' },
@@ -126,6 +140,7 @@ export class PickerOnboarding {
 			attr: { type: 'button' },
 		});
 
+		this.prevBtn.addEventListener('click', () => this.prev());
 		skipBtn.addEventListener('click', () => this.finish());
 		this.nextBtn.addEventListener('click', () => this.next());
 	}
@@ -140,6 +155,8 @@ export class PickerOnboarding {
 
 		if (step.selector.startsWith('.gl-picker-menu')) {
 			this.hooks.openMenu();
+		} else {
+			this.hooks.closeMenu();
 		}
 
 		const target = this.containerEl.querySelector<HTMLElement>(step.selector);
@@ -154,9 +171,17 @@ export class PickerOnboarding {
 			target.addEventListener('click', this.targetClickHandler);
 		}
 		this.positionOn(target);
+		if (step.selector.startsWith('.gl-picker-menu')) {
+			const settledTarget = target;
+			window.setTimeout(() => {
+				if (this.targetEl === settledTarget) this.positionOn(settledTarget);
+			}, 160);
+		}
 
 		this.stepBadgeEl.setText(`${i + 1}`);
+		this.titleEl.setText(step.title);
 		this.textEl.setText(step.text);
+		this.prevBtn.toggleClass('is-hidden', i === 0);
 		this.nextBtn.setText(
 			step.sticky
 				? 'Got it'
@@ -193,10 +218,12 @@ export class PickerOnboarding {
 		};
 
 		const ring = 6;
-		this.ringEl.style.left = `${rel.left - ring}px`;
-		this.ringEl.style.top = `${rel.top - ring}px`;
-		this.ringEl.style.width = `${rel.width + ring * 2}px`;
-		this.ringEl.style.height = `${rel.height + ring * 2}px`;
+		const ringW = Math.max(rel.width + ring * 2, 28);
+		const ringH = Math.max(rel.height + ring * 2, 28);
+		this.ringEl.style.left = `${rel.left + rel.width / 2 - ringW / 2}px`;
+		this.ringEl.style.top = `${rel.top + rel.height / 2 - ringH / 2}px`;
+		this.ringEl.style.width = `${ringW}px`;
+		this.ringEl.style.height = `${ringH}px`;
 
 		const step = this.steps[this.index];
 		if (!step) return;
@@ -236,6 +263,11 @@ export class PickerOnboarding {
 			return;
 		}
 		this.showStep(this.index + 1);
+	}
+
+	private prev() {
+		if (this.index <= 0) return;
+		this.showStep(this.index - 1);
 	}
 
 	private finish() {

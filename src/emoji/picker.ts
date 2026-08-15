@@ -263,6 +263,7 @@ export class EmojiPicker {
 	}
 
 	private openMenu() {
+		if (this.menuOpen) return;
 		if (!this.menuEl) {
 			this.menuEl = this.containerEl.createDiv({ cls: 'gl-picker-menu' });
 		}

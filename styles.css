@@ -649,7 +649,6 @@ body.gl-moving {
 }
 
 .gl-onboard-target {
-	position: relative;
 	z-index: 3;
 }
 
@@ -710,12 +709,10 @@ body.gl-moving {
 	font-weight: 700;
 }
 
-.gl-onboard-kicker {
-	font-size: var(--font-ui-smallest);
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	color: var(--gl-text-muted);
+.gl-onboard-title {
+	font-size: var(--font-ui-small);
+	font-weight: 700;
+	color: var(--gl-text);
 }
 
 .gl-onboard-text {
@@ -730,6 +727,7 @@ body.gl-moving {
 	gap: 8px;
 }
 
+.gl-onboard-prev,
 .gl-onboard-skip {
 	flex: 0 0 auto;
 	padding: 3px 6px;
@@ -742,9 +740,14 @@ body.gl-moving {
 	transition: background 120ms ease, color 120ms ease;
 }
 
+.gl-onboard-prev:hover,
 .gl-onboard-skip:hover {
 	background: var(--gl-hover);
 	color: var(--gl-hover-text);
+}
+
+.gl-onboard-prev.is-hidden {
+	visibility: hidden;
 }
 
 .gl-onboard-dots {
