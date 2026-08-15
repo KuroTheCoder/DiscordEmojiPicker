@@ -5,6 +5,7 @@ interface OnboardingStep {
 	placement: 'top' | 'bottom';
 	hue: number;
 	sticky?: boolean;
+	extraRings?: string[];
 }
 
 export interface OnboardingHooks {
@@ -30,6 +31,7 @@ export class PickerOnboarding {
 	private onDone?: () => void;
 	private targetEl: HTMLElement | null = null;
 	private targetClickHandler?: (ev: MouseEvent) => void;
+	private extraRings: Array<{ ring: HTMLElement; target: HTMLElement }> = [];
 	private cleanup: Array<() => void> = [];
 	private finishing = false;
 
@@ -60,6 +62,7 @@ export class PickerOnboarding {
 
 	reposition() {
 		if (this.targetEl) this.positionOn(this.targetEl);
+		this.repositionExtraRings();
 	}
 
 	private buildSteps() {
@@ -81,9 +84,10 @@ export class PickerOnboarding {
 			{
 				selector: '.gl-picker-menu',
 				title: 'Menu',
-				text: 'The ⋮ menu holds the Move and Resize options.',
+				text: 'The ⋮ button opens this menu — it holds the Move and Resize options.',
 				placement: 'top',
 				hue: 32,
+				extraRings: ['.gl-picker-menu-btn'],
 			},
 			{
 				selector: '.gl-picker-menu-item.gl-move',
@@ -171,10 +175,14 @@ export class PickerOnboarding {
 			target.addEventListener('click', this.targetClickHandler);
 		}
 		this.positionOn(target);
+		this.positionExtraRings();
 		if (step.selector.startsWith('.gl-picker-menu')) {
 			const settledTarget = target;
 			window.setTimeout(() => {
-				if (this.targetEl === settledTarget) this.positionOn(settledTarget);
+				if (this.targetEl === settledTarget) {
+					this.positionOn(settledTarget);
+					this.repositionExtraRings();
+				}
 			}, 160);
 		}
 
@@ -207,7 +215,7 @@ export class PickerOnboarding {
 		});
 	}
 
-	private positionOn(target: HTMLElement) {
+	private positionRingOn(ringEl: HTMLElement, target: HTMLElement) {
 		const containerRect = this.containerEl.getBoundingClientRect();
 		const rect = target.getBoundingClientRect();
 		const rel = {
@@ -216,14 +224,52 @@ export class PickerOnboarding {
 			width: rect.width,
 			height: rect.height,
 		};
-
 		const ring = 6;
 		const ringW = Math.max(rel.width + ring * 2, 28);
 		const ringH = Math.max(rel.height + ring * 2, 28);
-		this.ringEl.style.left = `${rel.left + rel.width / 2 - ringW / 2}px`;
-		this.ringEl.style.top = `${rel.top + rel.height / 2 - ringH / 2}px`;
-		this.ringEl.style.width = `${ringW}px`;
-		this.ringEl.style.height = `${ringH}px`;
+		ringEl.style.left = `${rel.left + rel.width / 2 - ringW / 2}px`;
+		ringEl.style.top = `${rel.top + rel.height / 2 - ringH / 2}px`;
+		ringEl.style.width = `${ringW}px`;
+		ringEl.style.height = `${ringH}px`;
+	}
+
+	private positionExtraRings() {
+		this.clearExtraRings();
+		const step = this.steps[this.index];
+		if (!step) return;
+		for (const selector of step.extraRings ?? []) {
+			const target = this.containerEl.querySelector<HTMLElement>(selector);
+			if (!target) continue;
+			const ring = this.uiEl.createDiv({
+				cls: 'gl-onboard-ring gl-onboard-ring-secondary',
+			});
+			this.extraRings.push({ ring, target });
+			this.positionRingOn(ring, target);
+		}
+	}
+
+	private repositionExtraRings() {
+		for (const { ring, target } of this.extraRings) {
+			this.positionRingOn(ring, target);
+		}
+	}
+
+	private clearExtraRings() {
+		for (const { ring } of this.extraRings) ring.remove();
+		this.extraRings = [];
+	}
+
+	private positionOn(target: HTMLElement) {
+		this.positionRingOn(this.ringEl, target);
+
+		const containerRect = this.containerEl.getBoundingClientRect();
+		const rect = target.getBoundingClientRect();
+		const rel = {
+			left: rect.left - containerRect.left,
+			top: rect.top - containerRect.top,
+			width: rect.width,
+			height: rect.height,
+		};
 
 		const step = this.steps[this.index];
 		if (!step) return;
@@ -288,6 +334,7 @@ export class PickerOnboarding {
 			this.targetEl.toggleClass('gl-onboard-target', false);
 		}
 		this.targetEl = null;
+		this.clearExtraRings();
 	}
 }
 

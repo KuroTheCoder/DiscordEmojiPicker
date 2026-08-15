@@ -636,6 +636,12 @@ body.gl-moving {
 	pointer-events: none;
 }
 
+.gl-onboard-ring-secondary {
+	animation: none;
+	border-style: dashed;
+	opacity: 0.85;
+}
+
 @keyframes gl-pulse {
 	0% {
 		box-shadow: 0 0 0 0 hsl(var(--gl-step-hue) 85% 58% / 45%);
