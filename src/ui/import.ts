@@ -36,6 +36,7 @@ import {
 	normalizeCode,
 } from '../packs';
 import { renderSystemEmojiPng, SYSTEM_EMOJI_GROUPS } from '../system-emoji';
+import { GuidedTour, TourStep } from './tour';
 
 type ImportMode = 'url' | 'discord' | 'clipboard' | 'note' | 'pack';
 
@@ -108,6 +109,7 @@ export class ImportModal extends Modal {
 	private selectedGuildId = '';
 	private discordEmojis: DiscordEmoji[] = [];
 	private discordStickers: DiscordSticker[] = [];
+	private onboarding?: GuidedTour;
 
 	constructor(app: App, plugin: DiscordEmojiPickerPlugin) {
 		super(app);
@@ -288,11 +290,49 @@ export class ImportModal extends Modal {
 			this.renderQueue();
 			this.setStatus('');
 		});
+		const helpBtn = footer.createEl('button', {
+			cls: 'gl-import-help',
+			attr: { type: 'button', 'aria-label': 'How to import' },
+		});
+		setIcon(helpBtn, 'help');
+		helpBtn.addEventListener('click', () => this.runOnboarding());
+
+		this.maybeRunOnboarding();
 	}
 
 	onClose() {
+		this.onboarding?.destroy();
+		this.onboarding = undefined;
 		for (const url of this.objectUrls) URL.revokeObjectURL(url);
 		this.objectUrls = [];
+	}
+
+	private maybeRunOnboarding() {
+		if (
+			this.plugin.settings.showOnboardingHint &&
+			!this.plugin.settings.importOnboardingSeen
+		) {
+			this.runOnboarding();
+		}
+	}
+
+	private runOnboarding() {
+		if (this.onboarding) return;
+		this.onboarding = new GuidedTour(
+			this.contentEl,
+			importTourSteps(),
+			{},
+			true,
+		);
+		this.onboarding.run(() => {
+			this.onboarding = undefined;
+			this.dismissOnboarding();
+		});
+	}
+
+	private dismissOnboarding() {
+		this.plugin.settings.importOnboardingSeen = true;
+		void this.plugin.saveSettings();
 	}
 
 	private setMode(mode: ImportMode) {
@@ -1017,6 +1057,39 @@ private async runImport() {
 
 function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function importTourSteps(): TourStep[] {
+	return [
+		{
+			selector: '.gl-import-dropzone',
+			title: 'Drop zone',
+			text: 'Drag emojis or stickers straight from Discord — or from your computer — into this area.',
+			placement: 'bottom',
+			hue: 200,
+		},
+		{
+			selector: '.gl-import-tabs',
+			title: 'Sources',
+			text: 'Pick a source: paste links, read your clipboard, scan the current note, or download a whole emoji pack.',
+			placement: 'bottom',
+			hue: 265,
+		},
+		{
+			selector: '.gl-import-queue',
+			title: 'Queue',
+			text: 'Everything you add lands here. Review the list and remove anything you do not want.',
+			placement: 'top',
+			hue: 45,
+		},
+		{
+			selector: '.gl-import-footer',
+			title: 'Import',
+			text: 'Saves the queued items into your emoji and sticker folders, ready for the picker.',
+			placement: 'top',
+			hue: 130,
+		},
+	];
 }
 
 async function importQueuedItem(

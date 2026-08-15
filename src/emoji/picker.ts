@@ -8,7 +8,7 @@ import {
 	SUPPORTED_EXTENSIONS,
 } from '../media';
 import { fontSizePx, sizeInEm } from '../utils/helpers';
-import { PickerOnboarding } from './onboarding';
+import { GuidedTour, TourStep } from '../ui/tour';
 
 const RECENT_KEY = 'recent';
 const ALL_KEY = 'All';
@@ -53,7 +53,7 @@ export class EmojiPicker {
 	private scrollEl!: HTMLElement;
 	private tooltipEl!: HTMLElement;
 	private tooltipRaf = 0;
-	private onboarding?: PickerOnboarding;
+	private onboarding?: GuidedTour;
 	private footerEl!: HTMLElement;
 	private countEl!: HTMLElement;
 	private footerMenuBtn!: HTMLButtonElement;
@@ -168,10 +168,14 @@ export class EmojiPicker {
 
 	private runOnboarding() {
 		if (this.onboarding) return;
-		this.onboarding = new PickerOnboarding(this.containerEl, {
-			openMenu: () => this.openMenu(),
-			closeMenu: () => this.closeMenu(),
-		});
+		this.onboarding = new GuidedTour(
+			this.containerEl,
+			pickerTourSteps(),
+			{
+				openMenu: () => this.openMenu(),
+				closeMenu: () => this.closeMenu(),
+			},
+		);
 		this.onboarding.run(() => {
 			this.onboarding = undefined;
 			this.dismissOnboarding();
@@ -1066,6 +1070,57 @@ export class EmojiPicker {
 			(el) => el as HTMLButtonElement,
 		);
 	}
+}
+
+function pickerTourSteps(): TourStep[] {
+	return [
+		{
+			selector: '.gl-picker-search input',
+			title: 'Search',
+			text: 'Search emojis and stickers by name as you type.',
+			placement: 'bottom',
+			hue: 205,
+		},
+		{
+			selector: '.gl-picker-tabs',
+			title: 'Tabs',
+			text: 'Switch between Emojis and Stickers.',
+			placement: 'bottom',
+			hue: 265,
+		},
+		{
+			selector: '.gl-picker-menu',
+			title: 'Menu',
+			text: 'The ⋮ button opens this menu — it holds the Move and Resize options.',
+			placement: 'top',
+			hue: 32,
+			extraRings: ['.gl-picker-menu-btn'],
+		},
+		{
+			selector: '.gl-picker-menu-item.gl-move',
+			title: 'Move',
+			text: 'Hold Move and drag to place the picker anywhere on screen.',
+			placement: 'top',
+			hue: 130,
+			sticky: true,
+		},
+		{
+			selector: '.gl-picker-menu-item.gl-resize-item',
+			title: 'Resize',
+			text: 'Toggle Resize on — a handle appears on the corner so you can drag to resize.',
+			placement: 'top',
+			hue: 45,
+			sticky: true,
+		},
+		{
+			selector: '.gl-picker-resize',
+			title: 'Resize corner',
+			text: 'Drag the corner to resize the picker. Double-click the corner to reset.',
+			placement: 'top',
+			hue: 285,
+			sticky: true,
+		},
+	];
 }
 
 function resolveRecent(

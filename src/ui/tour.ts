@@ -1,4 +1,4 @@
-interface OnboardingStep {
+export interface TourStep {
 	selector: string;
 	title: string;
 	text: string;
@@ -8,14 +8,16 @@ interface OnboardingStep {
 	extraRings?: string[];
 }
 
-export interface OnboardingHooks {
-	openMenu: () => void;
-	closeMenu: () => void;
+export interface TourHooks {
+	openMenu?: () => void;
+	closeMenu?: () => void;
 }
 
-export class PickerOnboarding {
+export class GuidedTour {
 	private containerEl: HTMLElement;
-	private hooks: OnboardingHooks;
+	private steps: TourStep[];
+	private hooks: TourHooks;
+	private scrollTargets: boolean;
 	private overlayEl!: HTMLElement;
 	private uiEl!: HTMLElement;
 	private ringEl!: HTMLElement;
@@ -26,7 +28,6 @@ export class PickerOnboarding {
 	private dotsEl!: HTMLElement;
 	private prevBtn!: HTMLButtonElement;
 	private nextBtn!: HTMLButtonElement;
-	private steps: OnboardingStep[] = [];
 	private index = 0;
 	private onDone?: () => void;
 	private targetEl: HTMLElement | null = null;
@@ -34,15 +35,22 @@ export class PickerOnboarding {
 	private extraRings: Array<{ ring: HTMLElement; target: HTMLElement }> = [];
 	private cleanup: Array<() => void> = [];
 	private finishing = false;
+	private positionClassAdded = false;
 
-	constructor(containerEl: HTMLElement, hooks: OnboardingHooks) {
+	constructor(
+		containerEl: HTMLElement,
+		steps: TourStep[],
+		hooks?: TourHooks,
+		scrollTargets = false,
+	) {
 		this.containerEl = containerEl;
-		this.hooks = hooks;
+		this.steps = steps;
+		this.hooks = hooks ?? {};
+		this.scrollTargets = scrollTargets;
 	}
 
 	run(onDone: () => void) {
 		this.onDone = onDone;
-		this.buildSteps();
 		if (this.steps.length === 0) {
 			onDone();
 			return;
@@ -57,6 +65,10 @@ export class PickerOnboarding {
 		this.cleanup = [];
 		this.overlayEl?.remove();
 		this.uiEl?.remove();
+		if (this.positionClassAdded) {
+			this.containerEl.toggleClass('gl-tour-relative', false);
+			this.positionClassAdded = false;
+		}
 		this.onDone = undefined;
 	}
 
@@ -65,58 +77,13 @@ export class PickerOnboarding {
 		this.repositionExtraRings();
 	}
 
-	private buildSteps() {
-		this.steps = [
-			{
-				selector: '.gl-picker-search input',
-				title: 'Search',
-				text: 'Search emojis and stickers by name as you type.',
-				placement: 'bottom',
-				hue: 205,
-			},
-			{
-				selector: '.gl-picker-tabs',
-				title: 'Tabs',
-				text: 'Switch between Emojis and Stickers.',
-				placement: 'bottom',
-				hue: 265,
-			},
-			{
-				selector: '.gl-picker-menu',
-				title: 'Menu',
-				text: 'The ⋮ button opens this menu — it holds the Move and Resize options.',
-				placement: 'top',
-				hue: 32,
-				extraRings: ['.gl-picker-menu-btn'],
-			},
-			{
-				selector: '.gl-picker-menu-item.gl-move',
-				title: 'Move',
-				text: 'Hold Move and drag to place the picker anywhere on screen.',
-				placement: 'top',
-				hue: 130,
-				sticky: true,
-			},
-			{
-				selector: '.gl-picker-menu-item.gl-resize-item',
-				title: 'Resize',
-				text: 'Toggle Resize on — a handle appears on the corner so you can drag to resize.',
-				placement: 'top',
-				hue: 45,
-				sticky: true,
-			},
-			{
-				selector: '.gl-picker-resize',
-				title: 'Resize corner',
-				text: 'Drag the corner to resize the picker. Double-click the corner to reset.',
-				placement: 'top',
-				hue: 285,
-				sticky: true,
-			},
-		];
-	}
-
 	private buildUi() {
+		const computed = getComputedStyle(this.containerEl);
+		if (computed.position === 'static') {
+			this.containerEl.toggleClass('gl-tour-relative', true);
+			this.positionClassAdded = true;
+		}
+
 		this.overlayEl = this.containerEl.createDiv({ cls: 'gl-onboard' });
 		this.uiEl = this.containerEl.createDiv({ cls: 'gl-onboard-ui' });
 		this.ringEl = this.uiEl.createDiv({ cls: 'gl-onboard-ring' });
@@ -157,10 +124,11 @@ export class PickerOnboarding {
 
 		this.uiEl.style.setProperty('--gl-step-hue', String(step.hue));
 
-		if (step.selector.startsWith('.gl-picker-menu')) {
-			this.hooks.openMenu();
+		const isMenuStep = step.selector.startsWith('.gl-picker-menu');
+		if (isMenuStep) {
+			this.hooks.openMenu?.();
 		} else {
-			this.hooks.closeMenu();
+			this.hooks.closeMenu?.();
 		}
 
 		const target = this.containerEl.querySelector<HTMLElement>(step.selector);
@@ -174,13 +142,16 @@ export class PickerOnboarding {
 			this.targetClickHandler = () => this.next();
 			target.addEventListener('click', this.targetClickHandler);
 		}
+		if (this.scrollTargets) {
+			target.scrollIntoView({ block: 'center' });
+		}
 		this.positionOn(target);
 		this.positionExtraRings();
-		if (step.selector.startsWith('.gl-picker-menu')) {
-			const settledTarget = target;
+		if (isMenuStep || this.scrollTargets) {
+			const pinnedTarget = target;
 			window.setTimeout(() => {
-				if (this.targetEl === settledTarget) {
-					this.positionOn(settledTarget);
+				if (this.targetEl === pinnedTarget) {
+					this.positionOn(pinnedTarget);
 					this.repositionExtraRings();
 				}
 			}, 160);
@@ -320,7 +291,7 @@ export class PickerOnboarding {
 		if (this.finishing) return;
 		this.finishing = true;
 		const done = this.onDone;
-		this.hooks.closeMenu();
+		this.hooks.closeMenu?.();
 		this.destroy();
 		done?.();
 	}
