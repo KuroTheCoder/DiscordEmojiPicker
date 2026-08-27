@@ -31,6 +31,7 @@ export default class DiscordEmojiPickerPlugin extends Plugin {
 		this.addCommand({
 			id: 'open-emoji-sticker-picker',
 			name: 'Open emoji & sticker picker',
+			hotkeys: [{ modifiers: ['Alt'], key: 'E' }],
 			checkCallback: (checking: boolean) => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (!view || !view.editor) return false;
@@ -43,6 +44,12 @@ export default class DiscordEmojiPickerPlugin extends Plugin {
 			id: 'import-emojis-stickers',
 			name: 'Import emojis & stickers',
 			callback: () => this.openImport(),
+		});
+
+		this.addCommand({
+			id: 'start-picker-onboarding',
+			name: 'Start picker onboarding',
+			callback: () => this.startOnboarding(),
 		});
 
 		this.addSettingTab(new DiscordEmojiPickerSettingTab(this.app, this));

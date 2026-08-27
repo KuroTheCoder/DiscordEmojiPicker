@@ -1,5 +1,5 @@
 export interface TourStep {
-	selector: string;
+	selector?: string;
 	title: string;
 	text: string;
 	placement: 'top' | 'bottom';
@@ -124,37 +124,43 @@ export class GuidedTour {
 
 		this.uiEl.style.setProperty('--gl-step-hue', String(step.hue));
 
-		const isMenuStep = step.selector.startsWith('.gl-picker-menu');
+		const isMenuStep = step.selector
+			? step.selector.startsWith('.gl-picker-menu')
+			: false;
 		if (isMenuStep) {
 			this.hooks.openMenu?.();
 		} else {
 			this.hooks.closeMenu?.();
 		}
 
-		const target = this.containerEl.querySelector<HTMLElement>(step.selector);
-		if (!target) {
-			window.setTimeout(() => this.next(), 50);
-			return;
-		}
-		this.targetEl = target;
-		target.toggleClass('gl-onboard-target', true);
-		if (!step.sticky) {
-			this.targetClickHandler = () => this.next();
-			target.addEventListener('click', this.targetClickHandler);
-		}
-		if (this.scrollTargets) {
-			target.scrollIntoView({ block: 'center' });
-		}
-		this.positionOn(target);
-		this.positionExtraRings();
-		if (isMenuStep || this.scrollTargets) {
-			const pinnedTarget = target;
-			window.setTimeout(() => {
-				if (this.targetEl === pinnedTarget) {
-					this.positionOn(pinnedTarget);
-					this.repositionExtraRings();
-				}
-			}, 160);
+		if (!step.selector) {
+			this.centerBubble();
+		} else {
+			const target = this.containerEl.querySelector<HTMLElement>(step.selector);
+			if (!target) {
+				window.setTimeout(() => this.next(), 50);
+				return;
+			}
+			this.targetEl = target;
+			target.toggleClass('gl-onboard-target', true);
+			if (!step.sticky) {
+				this.targetClickHandler = () => this.next();
+				target.addEventListener('click', this.targetClickHandler);
+			}
+			if (this.scrollTargets) {
+				target.scrollIntoView({ block: 'center' });
+			}
+			this.positionOn(target);
+			this.positionExtraRings();
+			if (isMenuStep || this.scrollTargets) {
+				const pinnedTarget = target;
+				window.setTimeout(() => {
+					if (this.targetEl === pinnedTarget) {
+						this.positionOn(pinnedTarget);
+						this.repositionExtraRings();
+					}
+				}, 160);
+			}
 		}
 
 		this.stepBadgeEl.setText(`${i + 1}`);
@@ -177,6 +183,21 @@ export class GuidedTour {
 		);
 	}
 
+	private centerBubble() {
+		this.ringEl.toggleClass('gl-onboard-ring-hidden', true);
+		const bubbleW = Math.min(
+			this.bubbleEl.offsetWidth,
+			this.containerEl.offsetWidth - 24,
+		);
+		const bubbleH = this.bubbleEl.offsetHeight;
+		const left = (this.containerEl.offsetWidth - bubbleW) / 2;
+		const top = (this.containerEl.offsetHeight - bubbleH) / 2;
+		this.bubbleEl.style.left = `${left}px`;
+		this.bubbleEl.style.top = `${top}px`;
+		this.bubbleEl.toggleClass('gl-onboard-arrow-top', false);
+		this.bubbleEl.toggleClass('gl-onboard-arrow-bottom', false);
+	}
+
 	private renderDots(current: number) {
 		this.dotsEl.empty();
 		this.steps.forEach((_, i) => {
@@ -187,6 +208,7 @@ export class GuidedTour {
 	}
 
 	private positionRingOn(ringEl: HTMLElement, target: HTMLElement) {
+		ringEl.toggleClass('gl-onboard-ring-hidden', false);
 		const containerRect = this.containerEl.getBoundingClientRect();
 		const rect = target.getBoundingClientRect();
 		const rel = {

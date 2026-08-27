@@ -1,4 +1,4 @@
-import { App, Editor, Notice, setIcon, TFile } from 'obsidian';
+import { App, Editor, Notice, setIcon, SliderComponent, TFile } from 'obsidian';
 import type DiscordEmojiPickerPlugin from '../main';
 import {
 	getMediaFiles,
@@ -13,6 +13,8 @@ import { GuidedTour, TourStep } from '../ui/tour';
 const RECENT_KEY = 'recent';
 const ALL_KEY = 'All';
 const MAX_RECENT = 40;
+const EMOJI_SIZE_DEFAULT = 42;
+const STICKER_SIZE_DEFAULT = 96;
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 520;
 const MIN_WIDTH = 280;
@@ -347,6 +349,8 @@ export class EmojiPicker {
 			void this.plugin.saveSettings();
 		});
 
+		this.buildSizeControls(this.menuEl);
+
 		this.menuEl.toggleClass('is-open', true);
 		this.menuOpen = true;
 
@@ -370,12 +374,58 @@ export class EmojiPicker {
 		this.menuOpen = false;
 	}
 
+	private buildSizeControls(menuEl: HTMLElement) {
+		menuEl.createDiv({
+			cls: 'gl-picker-menu-size-title',
+			text: 'Insert size',
+		});
+		this.addSizeSlider(menuEl, 'emojiSize', 'Emoji', 24, 160, 2, 42);
+		this.addSizeSlider(menuEl, 'stickerSize', 'Sticker', 48, 320, 4, 96);
+	}
+
+	private addSizeSlider(
+		container: HTMLElement,
+		key: 'emojiSize' | 'stickerSize',
+		label: string,
+		min: number,
+		max: number,
+		step: number,
+		def: number,
+	) {
+		const row = container.createDiv({ cls: 'gl-picker-menu-size' });
+		const labelEl = row.createSpan({
+			cls: 'gl-picker-menu-size-label',
+			text: `${label}: ${this.plugin.settings[key]}px`,
+		});
+		const control = row.createDiv({ cls: 'gl-picker-menu-size-control' });
+		const slider = new SliderComponent(control)
+			.setLimits(min, max, step)
+			.setInstant(true)
+			.setValue(this.plugin.settings[key])
+			.onChange((value) => {
+				this.plugin.settings[key] = value;
+				labelEl.setText(`${label}: ${value}px`);
+				void this.plugin.saveSettings();
+			});
+		const resetBtn = control.createEl('button', {
+			cls: 'gl-picker-menu-size-reset',
+			attr: { type: 'button', 'aria-label': `Reset to default (${def}px)` },
+		});
+		setIcon(resetBtn, 'reset');
+		const reset = () => {
+			this.plugin.settings[key] = def;
+			slider.setValue(def);
+			labelEl.setText(`${label}: ${def}px`);
+			void this.plugin.saveSettings();
+		};
+		resetBtn.onclick = reset;
+	}
+
 	private applySizes() {
-		const s = this.plugin.settings;
 		const base = fontSizePx(this.containerEl);
 		this.containerEl.setCssProps({
-			'--gl-emoji-size': sizeInEm(clamp(s.emojiSize, 24, 160), base),
-			'--gl-sticker-size': sizeInEm(clamp(s.stickerSize, 48, 320), base),
+			'--gl-emoji-size': sizeInEm(EMOJI_SIZE_DEFAULT, base),
+			'--gl-sticker-size': sizeInEm(STICKER_SIZE_DEFAULT, base),
 		});
 	}
 
@@ -1118,6 +1168,13 @@ function pickerTourSteps(): TourStep[] {
 			text: 'Drag the corner to resize the picker. Double-click the corner to reset.',
 			placement: 'top',
 			hue: 285,
+			sticky: true,
+		},
+		{
+			title: 'Hotkey',
+			text: 'Press Alt+E to open this picker. Don’t like that keybind? Change it anytime in Settings → Hotkeys → “Open emoji & sticker picker”.',
+			placement: 'bottom',
+			hue: 200,
 			sticky: true,
 		},
 	];
