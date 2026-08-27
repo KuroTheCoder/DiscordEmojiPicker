@@ -198,15 +198,15 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 
 		this.addSizeSetting(containerEl, 'emojiSize', {
 			label: 'Emoji size',
-			desc: 'Width of emoji images in the picker and when inserted.',
-			tooltip: 'Controls the grid size in the picker and the size of shortcodes and embeds in the note.',
+			desc: 'Width used when inserting emojis into notes. The picker always shows the default size.',
+			tooltip: 'Controls the size of shortcodes, embeds and HTML images in the note. The picker grid is not affected.',
 			opts: { min: 24, max: 160, step: 2, def: 42 },
 		});
 
 		this.addSizeSetting(containerEl, 'stickerSize', {
 			label: 'Sticker size',
-			desc: 'Width of sticker images in the picker and when inserted.',
-			tooltip: 'Controls the grid size in the picker and the size of shortcodes and embeds in the note.',
+			desc: 'Width used when inserting stickers into notes. The picker always shows the default size.',
+			tooltip: 'Controls the size of shortcodes, embeds and HTML images in the note. The picker grid is not affected.',
 			opts: { min: 48, max: 320, step: 4, def: 96 },
 		});
 
@@ -399,15 +399,15 @@ export class DiscordEmojiPickerSettingTab extends PluginSettingTab {
 			),
 			this.sliderDef(
 				'Emoji size',
-				'Width of emoji images in the picker and when inserted.',
-				'Controls the grid size in the picker and the size of shortcodes and embeds in the note.',
+				'Width used when inserting emojis into notes. The picker always shows the default size.',
+				'Controls the size of shortcodes, embeds and HTML images in the note. The picker grid is not affected.',
 				'emojiSize',
 				{ min: 24, max: 160, step: 2, def: 42 },
 			),
 			this.sliderDef(
 				'Sticker size',
-				'Width of sticker images in the picker and when inserted.',
-				'Controls the grid size in the picker and the size of shortcodes and embeds in the note.',
+				'Width used when inserting stickers into notes. The picker always shows the default size.',
+				'Controls the size of shortcodes, embeds and HTML images in the note. The picker grid is not affected.',
 				'stickerSize',
 				{ min: 48, max: 320, step: 4, def: 96 },
 			),

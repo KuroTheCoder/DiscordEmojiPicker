@@ -2,6 +2,19 @@
 
 All notable changes to Discord Emoji Picker.
 
+## 1.3.0 - 2026-08-27
+
+### Added
+
+- **Insert-size sliders in the picker ⋮ menu**: adjust the emoji and sticker sizes used when inserting into notes right from the picker menu, each with a ↺ reset button. Insert size now stays independent of how large the picker grid displays items.
+- **Default hotkey Alt+E** for **Open emoji & sticker picker**, so the picker opens with a single shortcut. Rebind or remove it anytime in **Settings → Hotkeys**.
+- **Onboarding tour hotkey step**: the final picker tour step tells you about the default **Alt+E** shortcut and where to change it. Text-only tour steps (no target element) are now supported, so the tour can end on a message without highlighting the UI.
+- **Start picker onboarding** command to replay the picker tour on demand.
+
+### Changed
+
+- The picker grid always shows the default size (42px emojis, 96px stickers) regardless of the **Emoji size** / **Sticker size** settings; those settings now only affect the size items are inserted into notes. Updated the settings descriptions to match.
+
 ## 1.2.5 - 2026-08-15
 
 ### Added

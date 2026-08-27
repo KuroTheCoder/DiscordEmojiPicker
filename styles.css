@@ -488,7 +488,7 @@
 	position: absolute;
 	left: var(--gl-pad);
 	bottom: calc(var(--gl-pad) + 26px);
-	min-width: 172px;
+	min-width: 220px;
 	display: none;
 	padding: 6px;
 	background: var(--gl-bg);
@@ -574,6 +574,65 @@
 	cursor: grabbing;
 }
 
+.gl-picker-menu-size-title {
+	padding: 8px 10px 4px;
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	color: var(--gl-text-muted, var(--text-muted));
+}
+
+.gl-picker-menu-size {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 4px 10px 8px;
+}
+
+.gl-picker-menu-size + .gl-picker-menu-size {
+	padding-top: 0;
+}
+
+.gl-picker-menu-size-label {
+	padding: 0 2px;
+	font-size: var(--font-ui-smaller);
+	color: var(--gl-text);
+}
+
+.gl-picker-menu-size .slider-container {
+	margin: 0;
+}
+
+.gl-picker-menu-size-control {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.gl-picker-menu-size-control .slider-container {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.gl-picker-menu-size-reset {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	border-radius: var(--gl-radius);
+	background: transparent;
+	color: var(--gl-text-muted, var(--text-muted));
+	cursor: pointer;
+}
+
+.gl-picker-menu-size-reset:hover {
+	background: var(--gl-hover);
+	color: var(--gl-text);
+}
+
 .gl-picker-switch {
 	flex: 0 0 auto;
 	width: 30px;
@@ -638,6 +697,10 @@ body.gl-moving {
 	border-radius: 10px;
 	animation: gl-pulse 1.6s ease-out infinite;
 	pointer-events: none;
+}
+
+.gl-onboard-ring-hidden {
+	display: none;
 }
 
 .gl-onboard-ring-secondary {
