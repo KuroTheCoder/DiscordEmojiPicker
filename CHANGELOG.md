@@ -2,6 +2,12 @@
 
 All notable changes to Discord Emoji Picker.
 
+## 1.3.1 - 2026-09-17
+
+### Fixed
+
+- **Code blocks and inline code disappearing in reading mode**: the shortcode renderer was destructively removing `<pre>`, `<code>`, and `<blockquote>` elements from the DOM before processing shortcodes. Replaced with a tree-walk check that only skips text nodes inside excluded elements (tables, syntax-highlighted blocks, links, images), preserving code blocks entirely. Shortcodes inside code blocks and callouts now render as emoji.
+
 ## 1.3.0 - 2026-08-27
 
 ### Added
