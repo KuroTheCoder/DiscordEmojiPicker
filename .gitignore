@@ -21,5 +21,8 @@ data.json
 # local agent config
 .opencode/
 
+# git worktrees
+code-blocks-in-callouts-break/
+
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
