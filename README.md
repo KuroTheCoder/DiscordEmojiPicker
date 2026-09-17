@@ -20,6 +20,17 @@ A Discord-style emoji and sticker picker for [Obsidian](https://obsidian.md). It
 - **Set management**: create, delete, and open set folders from the picker, the import modal, and the settings tab.
 - **Themable picker**: built-in Default / Compact / Vibrant / Minimal styles, all driven by `--gl-*` CSS variables you can override in a snippet.
 
+## Known limitation
+
+**Shortcodes in syntax-highlighted code blocks** (e.g., \`\`\`js, \`\`\`python) display as plain text (`:smile:`) rather than rendering as emoji. This is because syntax highlighters fragment code into token spans, breaking the shortcode pattern. 
+
+**Workarounds:**
+- Plain code blocks (no language) — renders as emoji ✓
+- Callouts — renders as emoji ✓
+- Inline code — renders as emoji in reading mode ✓
+
+See [issue #6](https://github.com/KuroTheCoder/DiscordEmojiPicker/issues/6) for details.
+
 ## Installation
 
 ### Community plugin list
